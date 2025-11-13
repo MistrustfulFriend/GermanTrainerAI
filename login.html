@@ -11,18 +11,23 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            background-attachment: fixed;
+            /* Enhanced multi-layer gradient background */
+            background: 
+                linear-gradient(135deg, rgba(52, 152, 219, 0.03) 0%, transparent 50%),
+                linear-gradient(225deg, rgba(142, 68, 173, 0.03) 0%, transparent 50%),
+                linear-gradient(to bottom, #f5f7fa 0%, #e8ecf1 100%);
             min-height: 100vh;
             color: #2c3e50;
             line-height: 1.6;
             position: relative;
+            overflow-x: hidden;
         }
-        
-        /* Subtle pattern overlay */
+
+        /* Subtle geometric pattern overlay */
         body::before {
             content: '';
             position: fixed;
@@ -31,59 +36,26 @@
             width: 100%;
             height: 100%;
             background-image: 
-                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.03) 35px, rgba(255,255,255,.03) 70px);
+                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(52, 152, 219, 0.02) 35px, rgba(52, 152, 219, 0.02) 70px),
+                repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(142, 68, 173, 0.02) 35px, rgba(142, 68, 173, 0.02) 70px);
             pointer-events: none;
             z-index: 0;
         }
-        
-        /* Floating decorative circles */
+
+        /* Floating accent circles in background */
         body::after {
             content: '';
             position: fixed;
-            top: -10%;
-            right: -5%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(52, 152, 219, 0.08) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
             z-index: 0;
         }
 
-
-            
-        .auth-logo {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 900;
-            color: white;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-    
-        .auth-logo::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
-            transform: rotate(45deg);
-        }
-    
-        .auth-header h1 {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
 
         .auth-container {
             background: white;
@@ -283,10 +255,10 @@
     <div class="auth-container">
         <div class="auth-header">
             <h1>
-                <div class="auth-logo">DL</div>
-                DeutschLern
+                <i class="fas fa-graduation-cap"></i>
+                iGer
             </h1>
-            <p>Master German with AI-Powered Interactive Exercises</p>
+            <p>Master German with AI-Powered Exercises</p>
         </div>
 
         <div class="auth-body">
@@ -492,6 +464,4 @@
         });
     </script>
 </body>
-
 </html>
-
