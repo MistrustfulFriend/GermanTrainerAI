@@ -14,6 +14,8 @@ let dictionary = [];
 let learningLog = [];
 let currentExercise = null;
 let selectedDictionaryWords = new Set();
+let touchTimer = null;
+let touchStartPos = { x: 0, y: 0 };
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -406,8 +408,9 @@ function renderExercise(exercise) {
     
     container.innerHTML = `
         ${usingDict}
-        <div class="word-select-hint">
-            💡 Double-click any word to add it to your dictionary!
+        <div class="word-select-hint mobile-hint">
+            <span class="desktop-hint">💡 Double-click any word to add it to your dictionary!</span>
+            <span class="mobile-hint-text">💡 Tap and hold any word to add it to your dictionary!</span>
         </div>
         <div class="exercise-question selectable-text" id="exercise-text">${formattedQuestion}</div>
         <textarea class="exercise-input" id="exercise-answer" rows="4" placeholder="Type your answer here..."></textarea>
@@ -416,8 +419,98 @@ function renderExercise(exercise) {
         <div id="exercise-feedback"></div>
     `;
     
-    document.getElementById('exercise-text').addEventListener('dblclick', handleWordSelection);
+    const exerciseText = document.getElementById('exercise-text');
+    
+    // Desktop: double-click
+    exerciseText.addEventListener('dblclick', handleWordSelection);
+    
+    // Mobile: long-press (tap and hold)
+    exerciseText.addEventListener('touchstart', handleTouchStart, { passive: false });
+    exerciseText.addEventListener('touchend', handleTouchEnd);
+    exerciseText.addEventListener('touchmove', handleTouchMove);
 }
+
+function handleTouchStart(event) {
+    // Record starting position
+    const touch = event.touches[0];
+    touchStartPos = {
+        x: touch.clientX,
+        y: touch.clientY
+    };
+    
+    // Start long-press timer (500ms)
+    touchTimer = setTimeout(() => {
+        // Trigger word selection after long press
+        handleWordSelectionFromTouch(event);
+    }, 500);
+}
+
+
+
+function handleTouchMove(event) {
+    // If user moves finger, cancel the long-press
+    if (touchTimer) {
+        const touch = event.touches[0];
+        const moveDistance = Math.sqrt(
+            Math.pow(touch.clientX - touchStartPos.x, 2) + 
+            Math.pow(touch.clientY - touchStartPos.y, 2)
+        );
+        
+        // Cancel if moved more than 10px
+        if (moveDistance > 10) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    }
+}
+
+function handleTouchEnd(event) {
+    // Cancel timer if touch ended before long-press completed
+    if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+    }
+}
+
+function handleWordSelectionFromTouch(event) {
+    event.preventDefault();
+    
+    // Get word at touch position
+    const touch = event.touches[0];
+    const range = document.caretRangeFromPoint(touch.clientX, touch.clientY);
+    
+    if (range) {
+        // Expand selection to word boundaries
+        const textNode = range.startContainer;
+        if (textNode.nodeType === Node.TEXT_NODE) {
+            const text = textNode.textContent;
+            let start = range.startOffset;
+            let end = range.startOffset;
+            
+            // Find word start
+            while (start > 0 && /\S/.test(text[start - 1])) {
+                start--;
+            }
+            
+            // Find word end
+            while (end < text.length && /\S/.test(text[end])) {
+                end++;
+            }
+            
+            const word = text.substring(start, end).trim();
+            
+            if (word && word.length > 0 && word.split(' ').length <= 3) {
+                // Provide haptic feedback if available
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                
+                openWordModal(word);
+            }
+        }
+    }
+}
+
 
 function handleWordSelection(event) {
     const selection = window.getSelection();
@@ -428,11 +521,22 @@ function handleWordSelection(event) {
     }
 }
 
+
+
+
+
 function openWordModal(word) {
     const modal = document.getElementById('word-selection-modal');
     document.getElementById('word-context').textContent = `Selected: "${word}"`;
     document.getElementById('selected-word-input').value = word;
     modal.classList.add('active');
+    
+    // Focus input on desktop, but not on mobile to avoid keyboard
+    if (window.innerWidth > 768) {
+        setTimeout(() => {
+            document.getElementById('selected-word-input').focus();
+        }, 100);
+    }
 }
 
 function closeWordModal() {
@@ -927,4 +1031,5 @@ async function handleFileImport(event) {
     };
     reader.readAsText(file);
     event.target.value = '';
+
 }
