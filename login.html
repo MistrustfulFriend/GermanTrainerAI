@@ -6,253 +6,284 @@
     <title>iGer - Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Enhanced multi-layer gradient background */
+    background: 
+        linear-gradient(135deg, rgba(52, 152, 219, 0.03) 0%, transparent 50%),
+        linear-gradient(225deg, rgba(142, 68, 173, 0.03) 0%, transparent 50%),
+        linear-gradient(to bottom, #f5f7fa 0%, #e8ecf1 100%);
+    min-height: 100vh;
+    color: #2c3e50;
+    line-height: 1.6;
+    position: relative;
+    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            /* Enhanced multi-layer gradient background */
-            background: 
-                linear-gradient(135deg, rgba(52, 152, 219, 0.03) 0%, transparent 50%),
-                linear-gradient(225deg, rgba(142, 68, 173, 0.03) 0%, transparent 50%),
-                linear-gradient(to bottom, #f5f7fa 0%, #e8ecf1 100%);
-            min-height: 100vh;
-            color: #2c3e50;
-            line-height: 1.6;
-            position: relative;
-            overflow-x: hidden;
-            display: flex;
-            justify-content: center; /* horizontal center */
-            align-items: center;     /* vertical center */
-            min-height: 100vh;       /* ensure full height */
-        }
+/* Subtle geometric pattern overlay */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(52, 152, 219, 0.02) 35px, rgba(52, 152, 219, 0.02) 70px),
+        repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(142, 68, 173, 0.02) 35px, rgba(142, 68, 173, 0.02) 70px);
+    pointer-events: none;
+    z-index: 0;
+}
 
-        /* Subtle geometric pattern overlay */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(52, 152, 219, 0.02) 35px, rgba(52, 152, 219, 0.02) 70px),
-                repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(142, 68, 173, 0.02) 35px, rgba(142, 68, 173, 0.02) 70px);
-            pointer-events: none;
-            z-index: 0;
-        }
+/* Floating accent circles in background */
+body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    right: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(52, 152, 219, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
 
-        /* Floating accent circles in background */
-        body::after {
-            content: '';
-            position: fixed;
-            top: -200px;
-            right: -200px;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(52, 152, 219, 0.08) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 0;
-        }
+.auth-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+    max-width: 400px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
 
+.auth-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    padding: 30px;
+    text-align: center;
+    color: white;
+}
 
-        .auth-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-            max-width: 400px;
-            width: 100%;
-        }
+.auth-header h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
 
-        .auth-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            padding: 30px;
-            text-align: center;
-            color: white;
-        }
+.auth-header h1 i {
+    font-size: 32px;
+    color: #3498db;
+}
 
-        .auth-header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
+.auth-header p {
+    font-size: 14px;
+    color: #bdc3c7;
+}
 
-        .auth-header h1 i {
-            font-size: 32px;
-            color: #3498db;
-        }
+.auth-body {
+    padding: 40px 30px;
+}
 
-        .auth-header p {
-            font-size: 14px;
-            color: #bdc3c7;
-        }
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
 
-        .auth-body {
-            padding: 40px 30px;
-        }
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background: #ecf0f1;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7f8c8d;
+    transition: all 0.3s ease;
+}
 
-        .tab-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
+.tab-btn.active {
+    background: #3498db;
+    color: white;
+}
 
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            background: #ecf0f1;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            color: #7f8c8d;
-            transition: all 0.3s ease;
-        }
+.form-group {
+    margin-bottom: 20px;
+}
 
-        .tab-btn.active {
-            background: #3498db;
-            color: white;
-        }
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #2c3e50;
+    font-size: 14px;
+    font-weight: 500;
+}
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+.form-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #dfe6e9;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #2c3e50;
-            font-size: 14px;
-            font-weight: 500;
-        }
+.form-group input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
 
-        .form-group input {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #dfe6e9;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
+.btn-submit:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
 
-        .btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
+.btn-submit:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
 
-        .btn-submit:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-        }
+.message {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    display: none;
+}
 
-        .btn-submit:disabled {
-            background: #95a5a6;
-            cursor: not-allowed;
-            transform: none;
-        }
+.message.error {
+    background: #fee;
+    color: #c00;
+    border: 1px solid #fcc;
+    display: block;
+}
 
-        .message {
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-        }
+.message.success {
+    background: #efe;
+    color: #080;
+    border: 1px solid #cfc;
+    display: block;
+}
 
-        .message.error {
-            background: #fee;
-            color: #c00;
-            border: 1px solid #fcc;
-            display: block;
-        }
+.form-view {
+    display: none;
+}
 
-        .message.success {
-            background: #efe;
-            color: #080;
-            border: 1px solid #cfc;
-            display: block;
-        }
+.form-view.active {
+    display: block;
+}
 
-        .form-view {
-            display: none;
-        }
+.password-requirements {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-top: 6px;
+}
 
-        .form-view.active {
-            display: block;
-        }
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
 
-        .password-requirements {
-            font-size: 12px;
-            color: #7f8c8d;
-            margin-top: 6px;
-        }
+.btn-submit.loading .loading-spinner {
+    display: block;
+}
 
-        .loading-spinner {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
+.btn-submit.loading span {
+    display: none;
+}
 
-        .btn-submit.loading .loading-spinner {
-            display: block;
-        }
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 
-        .btn-submit.loading span {
-            display: none;
-        }
+.input-icon {
+    position: relative;
+}
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+.input-icon i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7f8c8d;
+}
 
-        .input-icon {
-            position: relative;
-        }
+.input-icon input {
+    padding-left: 40px;
+}
 
-        .input-icon i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7f8c8d;
-        }
+/* Mobile responsiveness */
+@media screen and (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
 
-        .input-icon input {
-            padding-left: 40px;
-        }
+    .auth-container {
+        max-width: 100%;
+    }
+
+    .auth-header {
+        padding: 20px;
+    }
+
+    .auth-header h1 {
+        font-size: 24px;
+    }
+
+    .auth-header h1 i {
+        font-size: 28px;
+    }
+
+    .auth-body {
+        padding: 30px 20px;
+    }
+
+    .form-group input {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
     </style>
 </head>
 <body>
@@ -469,4 +500,5 @@
     </script>
 </body>
 </html>
+
 
