@@ -1,0 +1,930 @@
+// API Configuration
+const isLocal = window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1' || 
+                window.location.hostname.startsWith('192.168.');
+
+const API_URL = isLocal ? `http://${window.location.hostname}:5000` : `https://${window.location.hostname}`;
+console.log('API_URL configured as:', API_URL);
+
+// State management
+let currentUser = null;
+let selectedTopics = [];
+let customPracticeText = '';
+let dictionary = [];
+let learningLog = [];
+let currentExercise = null;
+let selectedDictionaryWords = new Set();
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('App initialized - MongoDB version with Auth');
+    checkAuthentication();
+});
+
+async function checkAuthentication() {
+    try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            currentUser = await response.json();
+            console.log('Logged in as:', currentUser.user.username);
+            initializeApp();
+        } else {
+            // Not authenticated, redirect to login
+            window.location.href = '/login.html';
+        }
+    } catch (error) {
+        console.error('Auth check error:', error);
+        window.location.href = '/login.html';
+    }
+}
+
+function initializeApp() {
+    loadLocalSettings();  // Only load topics/settings from localStorage
+    loadServerData();     // Load dictionary and log from server
+    initializeEventListeners();
+    updateUI();
+    testBackendConnection();
+    updateUserInfo();
+}
+
+function updateUserInfo() {
+    const header = document.querySelector('.header-content');
+    if (currentUser && !document.getElementById('user-info')) {
+        const userInfo = document.createElement('div');
+        userInfo.id = 'user-info';
+        userInfo.style.cssText = 'display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);';
+        userInfo.innerHTML = `
+            <span style="color: #bdc3c7; font-size: 14px;">
+                <i class="fas fa-user-circle"></i> ${currentUser.user.username}
+            </span>
+            <button onclick="handleLogout()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #bdc3c7; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        `;
+        header.appendChild(userInfo);
+    }
+}
+
+async function handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+        try {
+            await fetch(`${API_URL}/api/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            // Clear local storage on logout
+            localStorage.clear();
+            window.location.href = '/login.html';
+        } catch (error) {
+            console.error('Logout error:', error);
+            alert('Logout failed. Please try again.');
+        }
+    }
+}
+
+async function testBackendConnection() {
+    try {
+        const response = await fetch(`${API_URL}/health`);
+        const data = await response.json();
+        console.log('Backend connection successful:', data);
+        
+        if (!data.api_key_configured) {
+            console.warn('WARNING: OpenAI API key is not configured!');
+        }
+        if (data.mongodb_status !== 'connected') {
+            console.warn('WARNING: MongoDB is not connected!');
+        }
+    } catch (error) {
+        console.error('Backend connection failed:', error);
+    }
+}
+
+// Load user-specific data from server
+async function loadServerData() {
+    try {
+        showLoading(true);
+        
+        // Load dictionary from server
+        const dictResponse = await apiRequest(`${API_URL}/api/dictionary`, {
+            credentials: 'include'
+        });
+        
+        if (dictResponse && dictResponse.ok) {
+            dictionary = await dictResponse.json();
+            console.log(`✓ Loaded ${dictionary.length} words from server`);
+        }
+        
+        // Load log from server
+        const logResponse = await apiRequest(`${API_URL}/api/log`, {
+            credentials: 'include'
+        });
+        
+        if (logResponse && logResponse.ok) {
+            learningLog = await logResponse.json();
+            console.log(`✓ Loaded ${learningLog.length} log entries from server`);
+        }
+        
+    } catch (error) {
+        console.error('Error loading server data:', error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Load only local settings (not user data)
+function loadLocalSettings() {
+    // Only load topics and custom text - these are per-browser settings
+    const savedTopics = localStorage.getItem('selectedTopics');
+    if (savedTopics) selectedTopics = JSON.parse(savedTopics);
+    
+    const savedCustom = localStorage.getItem('customPracticeText');
+    if (savedCustom) customPracticeText = savedCustom;
+}
+
+async function apiRequest(url, options = {}) {
+    options.credentials = 'include';
+    
+    try {
+        const response = await fetch(url, options);
+        
+        if (response.status === 401) {
+            window.location.href = '/login.html';
+            return null;
+        }
+        
+        return response;
+    } catch (error) {
+        console.error('API request error:', error);
+        throw error;
+    }
+}
+
+// Event Listeners
+function initializeEventListeners() {
+    // Navigation
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            switchView(this.dataset.view);
+        });
+    });
+
+    // Topics
+    document.getElementById('save-topics-btn').addEventListener('click', saveTopics);
+    document.getElementById('select-all-topics-btn').addEventListener('click', selectAllTopics);
+    document.getElementById('deselect-all-topics-btn').addEventListener('click', deselectAllTopics);
+    
+    // Training
+    document.getElementById('start-exercise-btn').addEventListener('click', startExercise);
+    document.getElementById('practice-selected-btn').addEventListener('click', practiceSelectedWords);
+    
+    // Dictionary
+    document.getElementById('manual-add-btn').addEventListener('click', () => openManualAddModal());
+    document.getElementById('search-dictionary').addEventListener('input', filterDictionary);
+    document.getElementById('filter-type').addEventListener('change', filterDictionary);
+    document.getElementById('filter-category').addEventListener('change', filterDictionary);
+    document.getElementById('select-all-words-btn').addEventListener('click', selectAllWords);
+    document.getElementById('deselect-all-words-btn').addEventListener('click', deselectAllWords);
+    
+    // Modals
+    document.getElementById('close-modal-btn').addEventListener('click', closeWordModal);
+    document.getElementById('add-selected-word-btn').addEventListener('click', addSelectedWord);
+    document.getElementById('close-manual-modal-btn').addEventListener('click', closeManualModal);
+    document.getElementById('save-manual-word-btn').addEventListener('click', saveManualWord);
+    document.getElementById('close-edit-modal-btn').addEventListener('click', closeEditModal);
+    document.getElementById('save-edit-word-btn').addEventListener('click', saveEditWord);
+    
+    // Log
+    document.getElementById('clear-log-btn').addEventListener('click', clearLog);
+    
+    // Import/Export
+    document.getElementById('export-dictionary-btn').addEventListener('click', exportDictionary);
+    document.getElementById('import-dictionary-btn').addEventListener('click', importDictionary);
+    document.getElementById('import-file-input').addEventListener('change', handleFileImport);
+
+    // Collapsible topic sections
+    document.querySelectorAll('.topic-section-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const section = this.parentElement;
+            section.classList.toggle('collapsed');
+        });
+    });
+}
+
+// Navigation
+function switchView(viewName) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById(viewName + '-view').classList.add('active');
+    document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
+    
+    if (viewName === 'dictionary') {
+        renderDictionary();
+    } else if (viewName === 'log') {
+        renderLog();
+    } else if (viewName === 'training') {
+        checkTrainingAvailability();
+    }
+}
+
+// Topics Management
+function selectAllTopics() {
+    document.querySelectorAll('.topic-checkbox').forEach(cb => cb.checked = true);
+}
+
+function deselectAllTopics() {
+    document.querySelectorAll('.topic-checkbox').forEach(cb => cb.checked = false);
+}
+
+function saveTopics() {
+    customPracticeText = document.getElementById('custom-practice-input').value.trim();
+    
+    const checkboxes = document.querySelectorAll('.topic-checkbox:checked');
+    selectedTopics = Array.from(checkboxes).map(cb => ({
+        value: cb.value,
+        category: cb.dataset.category
+    }));
+    
+    // Save to localStorage (per-browser settings)
+    localStorage.setItem('selectedTopics', JSON.stringify(selectedTopics));
+    localStorage.setItem('customPracticeText', customPracticeText);
+    
+    const message = document.getElementById('topics-message');
+    
+    if (customPracticeText.length > 0 || selectedTopics.length > 0) {
+        let messageText = '';
+        if (customPracticeText.length > 0) {
+            messageText = `Custom practice topic saved: "${customPracticeText.substring(0, 50)}${customPracticeText.length > 50 ? '...' : ''}"`;
+            addLog(`Custom practice: ${customPracticeText}`);
+        }
+        if (selectedTopics.length > 0) {
+            if (messageText) messageText += ' | ';
+            messageText += `${selectedTopics.length} topic(s) selected`;
+            addLog(`Selected topics: ${selectedTopics.map(t => t.value).join(', ')}`);
+        }
+        message.textContent = messageText;
+        message.className = 'message success';
+    } else {
+        message.textContent = 'Please either enter a custom practice topic or select at least one topic.';
+        message.className = 'message error';
+    }
+    
+    setTimeout(() => {
+        message.textContent = '';
+        message.className = 'message';
+    }, 4000);
+}
+
+// Training
+function checkTrainingAvailability() {
+    const noTopicsMsg = document.getElementById('no-topics-message');
+    const trainingArea = document.getElementById('training-area');
+    
+    if (selectedTopics.length === 0 && dictionary.length === 0 && !customPracticeText) {
+        noTopicsMsg.style.display = 'block';
+        trainingArea.style.display = 'none';
+    } else {
+        noTopicsMsg.style.display = 'none';
+        trainingArea.style.display = 'block';
+        updatePracticeButton();
+    }
+}
+
+function updatePracticeButton() {
+    const btn = document.getElementById('practice-selected-btn');
+    const count = selectedDictionaryWords.size;
+    if (count > 0) {
+        btn.textContent = `🎯 Practice Selected Words (${count})`;
+        btn.style.display = 'inline-block';
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+async function startExercise() {
+    if (selectedTopics.length === 0 && !customPracticeText && dictionary.length === 0) {
+        alert('Please select topics, enter custom practice text, or add words to your dictionary first!');
+        return;
+    }
+    
+    const exerciseType = document.getElementById('exercise-type').value;
+    showLoading(true);
+    
+    let topicsToSend = [...selectedTopics];
+    if (customPracticeText) {
+        topicsToSend.push({
+            value: 'custom_practice',
+            category: 'custom',
+            text: customPracticeText
+        });
+    }
+    
+    try {
+        const response = await apiRequest(`${API_URL}/exercise`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                topics: topicsToSend,
+                exercise_type: exerciseType,
+                dictionary_words: []
+            })
+        });
+        
+        if (!response) return;
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to get exercise');
+        }
+        
+        currentExercise = await response.json();
+        renderExercise(currentExercise);
+        addLog(`Started ${exerciseType} exercise`);
+    } catch (error) {
+        console.error('Error:', error);
+        alert(`Failed to load exercise: ${error.message}`);
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function practiceSelectedWords() {
+    if (selectedDictionaryWords.size === 0) {
+        alert('Please select words from your dictionary to practice!');
+        return;
+    }
+    
+    const selectedWords = Array.from(selectedDictionaryWords).map(id => 
+        dictionary.find(w => w.id === id)
+    ).filter(w => w);
+    
+    const exerciseType = document.getElementById('exercise-type').value;
+    showLoading(true);
+    
+    try {
+        const response = await apiRequest(`${API_URL}/exercise`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                topics: selectedTopics,
+                exercise_type: exerciseType,
+                dictionary_words: selectedWords
+            })
+        });
+        
+        if (!response) return;
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to get exercise');
+        }
+        
+        currentExercise = await response.json();
+        renderExercise(currentExercise);
+        addLog(`Practiced ${selectedWords.length} selected words`);
+    } catch (error) {
+        console.error('Error:', error);
+        alert(`Failed to load exercise: ${error.message}`);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function renderExercise(exercise) {
+    const container = document.getElementById('exercise-container');
+    
+    let formattedQuestion = exercise.question
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    
+    const usingDict = exercise.using_dictionary ? 
+        '<div class="info-badge">🎯 Using your dictionary words!</div>' : '';
+    
+    container.innerHTML = `
+        ${usingDict}
+        <div class="word-select-hint">
+            💡 Double-click any word to add it to your dictionary!
+        </div>
+        <div class="exercise-question selectable-text" id="exercise-text">${formattedQuestion}</div>
+        <textarea class="exercise-input" id="exercise-answer" rows="4" placeholder="Type your answer here..."></textarea>
+        <button class="btn-primary" onclick="submitAnswer()">Submit Answer</button>
+        <button class="btn-secondary" onclick="startExercise()">New Exercise</button>
+        <div id="exercise-feedback"></div>
+    `;
+    
+    document.getElementById('exercise-text').addEventListener('dblclick', handleWordSelection);
+}
+
+function handleWordSelection(event) {
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    
+    if (selectedText && selectedText.length > 0 && selectedText.split(' ').length <= 3) {
+        openWordModal(selectedText);
+    }
+}
+
+function openWordModal(word) {
+    const modal = document.getElementById('word-selection-modal');
+    document.getElementById('word-context').textContent = `Selected: "${word}"`;
+    document.getElementById('selected-word-input').value = word;
+    modal.classList.add('active');
+}
+
+function closeWordModal() {
+    document.getElementById('word-selection-modal').classList.remove('active');
+}
+
+async function addSelectedWord() {
+    const word = document.getElementById('selected-word-input').value.trim();
+
+    if (!word) {
+        alert('Please enter a word!');
+        return;
+    }
+
+    showLoading(true);
+    closeWordModal();
+
+    try {
+        const response = await apiRequest(`${API_URL}/analyze-word`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                word: word,
+                context: currentExercise ? currentExercise.question : ''
+            })
+        });
+
+        if (!response) return;
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to analyze word');
+        }
+
+        const wordData = await response.json();
+
+        const dictionaryEntry = {
+            id: Date.now(),
+            german: wordData.german,
+            english: wordData.english,
+            russian: wordData.russian,
+            type: wordData.type,
+            category: wordData.category,
+            explanation: wordData.explanation,
+            examples: Array.isArray(wordData.examples) ? wordData.examples : [],
+            timestamp: new Date().toISOString()
+        };
+
+        // Add to server
+        const addResponse = await apiRequest(`${API_URL}/api/dictionary`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dictionaryEntry)
+        });
+
+        if (addResponse && addResponse.ok) {
+            const serverWord = await addResponse.json();
+            dictionary.push(serverWord);
+            addLog(`Added: ${wordData.german}`);
+            alert(`Word "${wordData.german}" added to dictionary!`);
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert(`Failed to add word: ${error.message}`);
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function submitAnswer() {
+    const answer = document.getElementById('exercise-answer').value.trim();
+    
+    if (!answer) {
+        alert('Please provide an answer!');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const response = await apiRequest(`${API_URL}/check-answer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: currentExercise.question,
+                answer: answer,
+                exercise_type: document.getElementById('exercise-type').value
+            })
+        });
+        
+        if (!response) return;
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to check answer');
+        }
+        
+        const result = await response.json();
+        displayFeedback(result);
+        addLog(`Completed exercise`);
+    } catch (error) {
+        console.error('Error:', error);
+        alert(`Failed to check answer: ${error.message}`);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function displayFeedback(result) {
+    const feedbackDiv = document.getElementById('exercise-feedback');
+    feedbackDiv.className = 'exercise-feedback';
+    feedbackDiv.innerHTML = result.feedback.replace(/\n/g, '<br>');
+}
+
+// Dictionary Management
+function openEditModal(id) {
+    const word = dictionary.find(w => w.id === id);
+    if (!word) return;
+    
+    document.getElementById('edit-word-id').value = word.id;
+    document.getElementById('edit-german').value = word.german;
+    document.getElementById('edit-english').value = word.english;
+    document.getElementById('edit-russian').value = word.russian;
+    document.getElementById('edit-type').value = word.type;
+    document.getElementById('edit-category').value = word.category;
+    document.getElementById('edit-explanation').value = word.explanation || '';
+    document.getElementById('edit-examples').value = (word.examples || []).join('\n');
+    
+    document.getElementById('edit-word-modal').classList.add('active');
+}
+
+function closeEditModal() {
+    document.getElementById('edit-word-modal').classList.remove('active');
+}
+
+async function saveEditWord() {
+    const id = parseInt(document.getElementById('edit-word-id').value);
+    const word = dictionary.find(w => w.id === id);
+    
+    if (!word) return;
+    
+    const updatedData = {
+        german: document.getElementById('edit-german').value.trim(),
+        english: document.getElementById('edit-english').value.trim(),
+        russian: document.getElementById('edit-russian').value.trim(),
+        type: document.getElementById('edit-type').value,
+        category: document.getElementById('edit-category').value,
+        explanation: document.getElementById('edit-explanation').value.trim(),
+        examples: document.getElementById('edit-examples').value.trim().split('\n').filter(e => e.trim())
+    };
+    
+    const response = await apiRequest(`${API_URL}/api/dictionary/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+    });
+    
+    if (response && response.ok) {
+        Object.assign(word, updatedData);
+        closeEditModal();
+        renderDictionary();
+        showDictionaryMessage('Word updated successfully!', 'success');
+        addLog(`Edited: ${word.german}`);
+    } else {
+        alert('Failed to update word on server');
+    }
+}
+
+function toggleWordSelection(id) {
+    if (selectedDictionaryWords.has(id)) {
+        selectedDictionaryWords.delete(id);
+    } else {
+        selectedDictionaryWords.add(id);
+    }
+    updatePracticeButton();
+    renderDictionary();
+}
+
+function selectAllWords() {
+    dictionary.forEach(w => selectedDictionaryWords.add(w.id));
+    updatePracticeButton();
+    renderDictionary();
+}
+
+function deselectAllWords() {
+    selectedDictionaryWords.clear();
+    updatePracticeButton();
+    renderDictionary();
+}
+
+// Manual Dictionary Add
+function openManualAddModal() {
+    document.getElementById('manual-add-modal').classList.add('active');
+}
+
+function closeManualModal() {
+    document.getElementById('manual-add-modal').classList.remove('active');
+    clearManualForm();
+}
+
+function clearManualForm() {
+    document.getElementById('manual-german').value = '';
+    document.getElementById('manual-english').value = '';
+    document.getElementById('manual-russian').value = '';
+    document.getElementById('manual-type').value = '';
+    document.getElementById('manual-category').value = '';
+    document.getElementById('manual-explanation').value = '';
+    document.getElementById('manual-examples').value = '';
+}
+
+async function saveManualWord() {
+    const german = document.getElementById('manual-german').value.trim();
+    const english = document.getElementById('manual-english').value.trim();
+    const russian = document.getElementById('manual-russian').value.trim();
+    const type = document.getElementById('manual-type').value;
+    const category = document.getElementById('manual-category').value;
+    const explanation = document.getElementById('manual-explanation').value.trim();
+    const examples = document.getElementById('manual-examples').value.trim();
+    
+    if (!german || !english || !russian || !type || !category) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    const word = {
+        id: Date.now(),
+        german, english, russian, type, category, explanation,
+        examples: examples.split('\n').filter(e => e.trim()),
+        timestamp: new Date().toISOString()
+    };
+    
+    const response = await apiRequest(`${API_URL}/api/dictionary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(word)
+    });
+    
+    if (response && response.ok) {
+        const serverWord = await response.json();
+        dictionary.push(serverWord);
+        closeManualModal();
+        showDictionaryMessage('Word added successfully!', 'success');
+        renderDictionary();
+        addLog(`Manually added: ${german}`);
+    }
+}
+
+async function deleteWord(id) {
+    if (confirm('Are you sure you want to delete this word?')) {
+        const word = dictionary.find(w => w.id === id);
+        
+        const response = await apiRequest(`${API_URL}/api/dictionary/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response && response.ok) {
+            dictionary = dictionary.filter(w => w.id !== id);
+            selectedDictionaryWords.delete(id);
+            renderDictionary();
+            updatePracticeButton();
+            addLog(`Deleted: ${word.german}`);
+        } else {
+            alert('Failed to delete word from server');
+        }
+    }
+}
+
+function filterDictionary() {
+    const searchTerm = document.getElementById('search-dictionary').value.toLowerCase();
+    const typeFilter = document.getElementById('filter-type').value;
+    const categoryFilter = document.getElementById('filter-category').value;
+    renderDictionary(searchTerm, typeFilter, categoryFilter);
+}
+
+function renderDictionary(search = '', typeFilter = '', categoryFilter = '') {
+    const listDiv = document.getElementById('dictionary-list');
+    
+    let filtered = dictionary.filter(w => {
+        const matchesSearch = !search || 
+            w.german.toLowerCase().includes(search) || 
+            w.english.toLowerCase().includes(search) ||
+            w.russian.toLowerCase().includes(search);
+        
+        const matchesType = !typeFilter || w.type === typeFilter;
+        const matchesCategory = !categoryFilter || w.category === categoryFilter;
+        
+        return matchesSearch && matchesType && matchesCategory;
+    });
+    
+    if (filtered.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; padding: 20px; color: #7f8c8d;">No words found.</p>';
+        return;
+    }
+    
+    listDiv.innerHTML = filtered.map(word => {
+        const isSelected = selectedDictionaryWords.has(word.id);
+        const selectedClass = isSelected ? 'selected-for-practice' : '';
+        
+        return `
+        <div class="dictionary-item ${selectedClass}">
+            <div class="word-header">
+                <div class="word-select-checkbox">
+                    <input type="checkbox" 
+                           ${isSelected ? 'checked' : ''} 
+                           onchange="toggleWordSelection(${word.id})"
+                           title="Select for practice">
+                </div>
+                <div class="word-main">
+                    <div class="word-german">${word.german}</div>
+                    <div class="word-translations">
+                        <span class="word-english">🇬🇧 ${word.english}</span>
+                        <span class="word-russian">🇷🇺 ${word.russian}</span>
+                    </div>
+                    <div class="word-meta">
+                        <span class="word-badge badge-type">${word.type}</span>
+                        <span class="word-badge badge-category">${word.category}</span>
+                    </div>
+                </div>
+                <div class="word-actions">
+                    <button onclick="openEditModal(${word.id})" title="Edit">✏️</button>
+                    <button onclick="deleteWord(${word.id})" title="Delete">🗑️</button>
+                </div>
+            </div>
+            ${word.explanation ? `
+                <div class="word-details">
+                    <div class="word-explanation"><strong>Explanation:</strong> ${word.explanation}</div>
+                </div>
+            ` : ''}
+            ${word.examples && word.examples.length > 0 ? `
+                <div class="word-details">
+                    <div class="word-examples">
+                        <strong>Examples:</strong>
+                        ${word.examples.map(ex => `• ${ex}`).join('<br>')}
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `}).join('');
+}
+
+function showDictionaryMessage(text, type) {
+    const message = document.getElementById('dictionary-message');
+    message.textContent = text;
+    message.className = `message ${type}`;
+    setTimeout(() => {
+        message.textContent = '';
+        message.className = 'message';
+    }, 3000);
+}
+
+// Log Management
+async function addLog(content) {
+    learningLog.unshift({
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        content: content
+    });
+    
+    // Save to server
+    await apiRequest(`${API_URL}/api/log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+    });
+}
+
+async function clearLog() {
+    if (confirm('Clear entire log?')) {
+        const response = await apiRequest(`${API_URL}/api/log`, {
+            method: 'DELETE'
+        });
+        
+        if (response && response.ok) {
+            learningLog = [];
+            renderLog();
+        }
+    }
+}
+
+function renderLog() {
+    const listDiv = document.getElementById('log-list');
+    
+    if (learningLog.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; padding: 20px; color: #7f8c8d;">No log entries yet.</p>';
+        return;
+    }
+    
+    listDiv.innerHTML = learningLog.map(entry => `
+        <div class="log-item">
+            <div class="log-timestamp">${new Date(entry.timestamp).toLocaleString()}</div>
+            <div class="log-content">${entry.content}</div>
+        </div>
+    `).join('');
+}
+
+function updateUI() {
+    document.querySelectorAll('.topic-checkbox').forEach(checkbox => {
+        checkbox.checked = selectedTopics.some(t => t.value === checkbox.value);
+    });
+    
+    const customInput = document.getElementById('custom-practice-input');
+    if (customInput && customPracticeText) {
+        customInput.value = customPracticeText;
+    }
+}
+
+function showLoading(show) {
+    document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+}
+
+// Export Dictionary
+function exportDictionary() {
+    if (dictionary.length === 0) {
+        alert('Your dictionary is empty. Nothing to export.');
+        return;
+    }
+    
+    const dataStr = JSON.stringify(dictionary, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `german-dictionary-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    addLog('Exported dictionary');
+    showDictionaryMessage(`Exported ${dictionary.length} words successfully!`, 'success');
+}
+
+// Import Dictionary
+function importDictionary() {
+    document.getElementById('import-file-input').click();
+}
+
+async function handleFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.json')) {
+        alert('Please select a valid JSON file.');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            if (!Array.isArray(importedData)) {
+                alert('Invalid file format. Expected an array of words.');
+                return;
+            }
+            
+            if (confirm(`Import ${importedData.length} words? This will add them to your dictionary on the server.`)) {
+                showLoading(true);
+                let addedCount = 0;
+                
+                for (const word of importedData) {
+                    // Check if word already exists
+                    const exists = dictionary.some(w => w.german === word.german);
+                    if (!exists) {
+                        // Add to server
+                        const response = await apiRequest(`${API_URL}/api/dictionary`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                ...word,
+                                id: Date.now() + Math.random(),
+                                timestamp: word.timestamp || new Date().toISOString()
+                            })
+                        });
+                        
+                        if (response && response.ok) {
+                            const serverWord = await response.json();
+                            dictionary.push(serverWord);
+                            addedCount++;
+                        }
+                    }
+                }
+                
+                showLoading(false);
+                renderDictionary();
+                addLog(`Imported ${addedCount} new words`);
+                showDictionaryMessage(`Successfully imported ${addedCount} new words!`, 'success');
+            }
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('Error reading file. Please ensure it\'s a valid JSON file.');
+            showLoading(false);
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}

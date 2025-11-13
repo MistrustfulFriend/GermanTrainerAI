@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>German Learning App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-graduation-cap"></i>
+                    iGer: Interactive Language Learning Platform
+                </h1>
+                <div class="subtitle">Master German with AI-Powered Exercises</div>
+            </div>
+            <nav>
+                <button class="nav-btn active" data-view="topics">
+                    <i class="fas fa-list-check"></i> Topics
+                </button>
+                <button class="nav-btn" data-view="training">
+                    <i class="fas fa-dumbbell"></i> Training
+                </button>
+                <button class="nav-btn" data-view="dictionary">
+                    <i class="fas fa-book"></i> Dictionary
+                </button>
+                <button class="nav-btn" data-view="log">
+                    <i class="fas fa-clipboard-list"></i> Log
+                </button>
+            </nav>
+        </header>
+
+        <!-- Topics View -->
+        <div id="topics-view" class="view active">
+            <h2><i class="fas fa-tasks"></i> Select Learning Topics</h2>
+            
+            <div class="topics-controls">
+                <button class="btn-primary" id="save-topics-btn">
+                    <i class="fas fa-save"></i> Save Topics & Settings
+                </button>
+                <button class="btn-secondary" id="select-all-topics-btn">
+                    <i class="fas fa-check-square"></i> Select All
+                </button>
+                <button class="btn-secondary" id="deselect-all-topics-btn">
+                    <i class="fas fa-square"></i> Deselect All
+                </button>
+            </div>
+
+            <div id="topics-message" class="message"></div>
+
+            <div class="custom-practice-section">
+                <h3><i class="fas fa-pen"></i> Custom Practice Topic</h3>
+                <p class="custom-practice-hint">
+                    <i class="fas fa-lightbulb"></i>
+                    Describe what you'd like to practice (e.g., "ordering food at a restaurant")
+                </p>
+                <textarea id="custom-practice-input" placeholder="Type your custom practice topic here..." rows="4"></textarea>
+            </div>
+
+            <div class="topics-scrollable">
+                <div class="topic-section collapsed">
+                    <div class="topic-section-header">
+                        <h3><i class="fas fa-comments"></i> Conversation Topics</h3>
+                        <i class="fas fa-chevron-down topic-section-toggle"></i>
+                    </div>
+                    <div class="topic-section-content">
+                        <div class="topics-grid">
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="conv_greetings" data-category="conversation">
+                                <span>Greetings & Introductions</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="conv_food" data-category="conversation">
+                                <span>Food & Dining</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="conv_travel" data-category="conversation">
+                                <span>Travel & Directions</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="conv_shopping" data-category="conversation">
+                                <span>Shopping & Money</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="topic-section collapsed">
+                    <div class="topic-section-header">
+                        <h3><i class="fas fa-book-open"></i> Grammar Topics</h3>
+                        <i class="fas fa-chevron-down topic-section-toggle"></i>
+                    </div>
+                    <div class="topic-section-content">
+                        <div class="topics-grid">
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="gram_cases" data-category="grammar">
+                                <span>Cases (Nominativ, Akkusativ, Dativ, Genitiv)</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="gram_articles" data-category="grammar">
+                                <span>Articles (der, die, das)</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="gram_verbs" data-category="grammar">
+                                <span>Verb Conjugation</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="gram_modal" data-category="grammar">
+                                <span>Modal Verbs</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="topic-section collapsed">
+                    <div class="topic-section-header">
+                        <h3><i class="fas fa-language"></i> Vocabulary Practice</h3>
+                        <i class="fas fa-chevron-down topic-section-toggle"></i>
+                    </div>
+                    <div class="topic-section-content">
+                        <div class="topics-grid">
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="vocab_verbs" data-category="vocabulary">
+                                <span>Common Verbs</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="vocab_nouns" data-category="vocabulary">
+                                <span>Common Nouns</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="vocab_adjectives" data-category="vocabulary">
+                                <span>Adjectives & Adverbs</span>
+                            </label>
+                            <label class="topic-item">
+                                <input type="checkbox" class="topic-checkbox" value="vocab_phrases" data-category="vocabulary">
+                                <span>Useful Phrases & Idioms</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Training View -->
+        <div id="training-view" class="view">
+            <h2><i class="fas fa-dumbbell"></i> Training Session</h2>
+            
+            <div id="no-topics-message" style="display: none; padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle"></i> Please select topics first or add words to your dictionary!
+            </div>
+
+            <div id="training-area">
+                <div class="control-panel">
+                    <label>Exercise Type:</label>
+                    <select id="exercise-type">
+                        <option value="translation">Translation Challenge</option>
+                        <option value="conversation">Conversation Practice</option>
+                        <option value="grammar">Grammar Focus</option>
+                        <option value="vocabulary">Vocabulary Builder</option>
+                        <option value="listening_practice">Listening Practice</option>
+                        <option value="creative_writing">Creative Writing</option>
+                        <option value="error_correction">Error Correction</option>
+                    </select>
+                    <button class="btn-primary" id="start-exercise-btn">
+                        <i class="fas fa-play"></i> Start Exercise
+                    </button>
+                    <button class="btn-accent" id="practice-selected-btn" style="display: none;">
+                        <i class="fas fa-target"></i> Practice Selected Words
+                    </button>
+                </div>
+                
+                <div id="exercise-container">
+                    <div class="word-select-hint">
+                        <i class="fas fa-lightbulb"></i> Double-click any word in the exercise to add it to your dictionary!
+                    </div>
+                    <p style="text-align: center; padding: 40px; color: #95a5a6;">
+                        Click "Start Exercise" to begin your practice session
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dictionary View -->
+        <div id="dictionary-view" class="view">
+            <h2><i class="fas fa-book"></i> My Dictionary</h2>
+            
+            <div class="dictionary-controls">
+                <button class="btn-primary" id="manual-add-btn">
+                    <i class="fas fa-plus"></i> Add Word Manually
+                </button>
+                <button class="btn-secondary" id="select-all-words-btn">
+                    <i class="fas fa-check-square"></i> Select All
+                </button>
+                <button class="btn-secondary" id="deselect-all-words-btn">
+                    <i class="fas fa-square"></i> Deselect All
+                </button>
+                <button class="btn-secondary" id="export-dictionary-btn">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button class="btn-secondary" id="import-dictionary-btn">
+                    <i class="fas fa-upload"></i> Import
+                </button>
+                <input type="file" id="import-file-input" accept=".json">
+            </div>
+
+            <div id="dictionary-message" class="message"></div>
+            
+            <div class="search-filter-box">
+                <input type="text" id="search-dictionary" placeholder="Search dictionary...">
+                <select id="filter-type">
+                    <option value="">All Types</option>
+                    <option value="verb">Verbs</option>
+                    <option value="noun">Nouns</option>
+                    <option value="adjective">Adjectives</option>
+                    <option value="adverb">Adverbs</option>
+                    <option value="phrase">Phrases</option>
+                </select>
+                <select id="filter-category">
+                    <option value="">All Categories</option>
+                    <option value="conversation">Conversation</option>
+                    <option value="grammar">Grammar</option>
+                    <option value="vocabulary">Vocabulary</option>
+                </select>
+            </div>
+
+            <div id="dictionary-list">
+                <p style="text-align: center; padding: 20px; color: #7f8c8d;">Your dictionary is empty. Double-click words in exercises to add them!</p>
+            </div>
+        </div>
+
+        <!-- Log View -->
+        <div id="log-view" class="view">
+            <h2><i class="fas fa-clipboard-list"></i> Learning Log</h2>
+            
+            <button class="btn-secondary" id="clear-log-btn">
+                <i class="fas fa-trash-alt"></i> Clear Log
+            </button>
+            
+            <div id="log-list" style="margin-top: 20px;">
+                <p style="text-align: center; padding: 20px; color: #7f8c8d;">No log entries yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Selection Modal -->
+    <div id="word-selection-modal" class="modal">
+        <div class="modal-content">
+            <h3>Add Word to Dictionary</h3>
+            <p id="word-context" style="margin-bottom: 16px; color: #7f8c8d;"></p>
+            <input type="text" id="selected-word-input" placeholder="Edit word if needed">
+            <button class="btn-primary" id="add-selected-word-btn">Add to Dictionary</button>
+            <button class="btn-secondary" id="close-modal-btn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Manual Add Modal -->
+    <div id="manual-add-modal" class="modal">
+        <div class="modal-content">
+            <h3>Add Word Manually</h3>
+            <input type="text" id="manual-german" placeholder="German word *" required>
+            <input type="text" id="manual-english" placeholder="English translation *" required>
+            <input type="text" id="manual-russian" placeholder="Russian translation *" required>
+            <select id="manual-type" required>
+                <option value="">Select type *</option>
+                <option value="verb">Verb</option>
+                <option value="noun">Noun</option>
+                <option value="adjective">Adjective</option>
+                <option value="adverb">Adverb</option>
+                <option value="phrase">Phrase</option>
+                <option value="other">Other</option>
+            </select>
+            <select id="manual-category" required>
+                <option value="">Select category *</option>
+                <option value="conversation">Conversation</option>
+                <option value="grammar">Grammar</option>
+                <option value="vocabulary">Vocabulary</option>
+            </select>
+            <textarea id="manual-explanation" placeholder="Explanation (optional)" rows="3"></textarea>
+            <textarea id="manual-examples" placeholder="Examples (one per line, optional)" rows="3"></textarea>
+            <button class="btn-primary" id="save-manual-word-btn">Save Word</button>
+            <button class="btn-secondary" id="close-manual-modal-btn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Edit Word Modal -->
+    <div id="edit-word-modal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Word</h3>
+            <input type="hidden" id="edit-word-id">
+            <input type="text" id="edit-german" placeholder="German word">
+            <input type="text" id="edit-english" placeholder="English translation">
+            <input type="text" id="edit-russian" placeholder="Russian translation">
+            <select id="edit-type">
+                <option value="verb">Verb</option>
+                <option value="noun">Noun</option>
+                <option value="adjective">Adjective</option>
+                <option value="adverb">Adverb</option>
+                <option value="phrase">Phrase</option>
+                <option value="other">Other</option>
+            </select>
+            <select id="edit-category">
+                <option value="conversation">Conversation</option>
+                <option value="grammar">Grammar</option>
+                <option value="vocabulary">Vocabulary</option>
+            </select>
+            <textarea id="edit-explanation" placeholder="Explanation" rows="3"></textarea>
+            <textarea id="edit-examples" placeholder="Examples (one per line)" rows="3"></textarea>
+            <button class="btn-primary" id="save-edit-word-btn">Save Changes</button>
+            <button class="btn-secondary" id="close-edit-modal-btn">Cancel</button>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
