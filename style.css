@@ -105,6 +105,10 @@ nav {
     -webkit-overflow-scrolling: touch;
 }
 
+.nav::-webkit-scrollbar {
+    display: none; 
+}
+
 .nav-btn {
     padding: 16px 24px;
     background: transparent;
@@ -713,8 +717,8 @@ input[type="file"] {
 
 @media screen and (max-width: 768px) {
     header {
-        margin-left: 12px;
-        margin-right: 12px;
+        margin-left: 0px;
+        margin-right: 0px;
         border-radius: 0 0 6px 6px;
     }
 
@@ -1012,4 +1016,5 @@ input[type="file"] {
         flex-wrap: wrap;
     }
 }
+
 
