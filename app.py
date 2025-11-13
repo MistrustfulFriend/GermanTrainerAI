@@ -146,7 +146,7 @@ def get_current_user_id():
 def register():
     """Register a new user"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         data = request.json
@@ -198,7 +198,7 @@ def register():
 def login():
     """Login user"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         data = request.json
@@ -246,7 +246,7 @@ def logout():
 def get_current_user():
     """Get current user info"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         user_id = get_current_user_id()
@@ -978,7 +978,7 @@ def analyze_word(word, context):
 def get_dictionary():
     """Get all dictionary words for current user"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         user_id = get_current_user_id()
@@ -999,7 +999,7 @@ def get_dictionary():
 def add_to_dictionary():
     """Add a word to dictionary"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         data = request.json
@@ -1032,7 +1032,7 @@ def add_to_dictionary():
 def update_dictionary_word(word_id):
     """Update a dictionary word"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         data = request.json
@@ -1070,7 +1070,7 @@ def update_dictionary_word(word_id):
 def delete_dictionary_word(word_id):
     """Delete a dictionary word"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         user_id = get_current_user_id()
@@ -1097,7 +1097,7 @@ def delete_dictionary_word(word_id):
 def sync_dictionary():
     """Sync local dictionary with server (merge)"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         data = request.json
@@ -1146,7 +1146,7 @@ def sync_dictionary():
 def get_log():
     """Get learning log"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         user_id = get_current_user_id()
@@ -1166,7 +1166,7 @@ def get_log():
 def add_to_log():
     """Add entry to learning log"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         data = request.json
@@ -1193,7 +1193,7 @@ def add_to_log():
 def clear_log():
     """Clear all log entries"""
     try:
-        if not db:
+        if db is None:
             return jsonify({"error": "Database not connected"}), 500
         
         user_id = get_current_user_id()
@@ -1306,4 +1306,5 @@ if __name__ == '__main__':
     print(f"OpenAI API Key: {'✓' if openai.api_key else '✗'}")
     print(f"MongoDB: {'✓ Connected' if db else '✗ Not connected'}")
     print(f"{'='*50}\n")
+
     app.run(host='0.0.0.0', port=port, debug=True)
