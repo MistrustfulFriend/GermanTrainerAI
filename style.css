@@ -628,6 +628,15 @@ h3 {
     color: #7d6608;
 }
 
+/* Show/hide hints based on device */
+.mobile-hint-text {
+    display: none;
+}
+
+.desktop-hint {
+    display: inline;
+}
+
 .info-badge {
     background: #e8f5e9;
     border-left: 4px solid #27ae60;
@@ -886,6 +895,15 @@ input[type="file"] {
     .word-select-hint, .info-badge {
         font-size: 12px;
         padding: 10px 12px;
+    }
+
+    /* Show mobile hint, hide desktop hint */
+    .desktop-hint {
+        display: none;
+    }
+
+    .mobile-hint-text {
+        display: inline;
     }
 
     #user-info {
