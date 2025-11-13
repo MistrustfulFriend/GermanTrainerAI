@@ -1289,7 +1289,8 @@ def analyze_word_route():
 
 @app.route('/health', methods=['GET'])
 def health():
-    db_status = "connected" if db else "disconnected"
+    # Fixed: Use 'is not None' instead of just 'if db'
+    db_status = "connected" if db is not None else "disconnected"
     return jsonify({
         "status": "healthy",
         "api_key_configured": bool(openai.api_key),
@@ -1308,3 +1309,4 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
