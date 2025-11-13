@@ -149,8 +149,8 @@ nav {
 .view {
     display: none;
     position: fixed;       /* float above everything */
-    top: 50%;              /* vertical center */
-    left: 50%;             /* horizontal center */
+    top: 72%;
+    left: 47%;
     transform: translate(-50%, -50%); /* center by its own size */
     z-index: 1000;         /* make sure it’s above background */
     background: #ffffff;
@@ -1016,5 +1016,6 @@ input[type="file"] {
         flex-wrap: wrap;
     }
 }
+
 
 
