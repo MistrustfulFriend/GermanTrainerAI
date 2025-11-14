@@ -1112,8 +1112,8 @@ function showFlashcard() {
     // FIXED: Reset flip state BEFORE updating content
     flashcard.classList.remove('flipped');
     
-    // Small delay to ensure flip animation completes and content is hidden
-    setTimeout(() => {
+    // Use requestAnimationFrame to ensure smooth transition
+    requestAnimationFrame(() => {
         if (practiceDirection === 'german-to-target') {
             document.getElementById('flashcard-german').textContent = word.german;
             document.getElementById('flashcard-type-front').textContent = word.type;
@@ -1128,7 +1128,7 @@ function showFlashcard() {
         
         updatePracticeProgress();
         updatePracticeNavButtons();
-    }, 50);
+    });
 }
 
 function flipCard() {
@@ -1327,3 +1327,4 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
