@@ -1218,6 +1218,9 @@ function selectQuizAnswer(selected, correct) {
     `;
     feedback.style.display = 'block';
     
+    // FIXED: Update navigation buttons after answer
+    updatePracticeNavButtons();
+    
     if (practiceIndex === practiceWords.length - 1) {
         setTimeout(() => {
             showQuizComplete();
