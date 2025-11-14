@@ -6,7 +6,6 @@
     <title>German Learning App</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
     <div class="container">
@@ -92,7 +91,6 @@
                     </div>
                 </div>
 
-
                 <div class="topic-section collapsed">
                     <div class="topic-section-header">
                         <h3><i class="fas fa-book-open"></i> Grammar Topics</h3>
@@ -149,8 +147,6 @@
             </div>
         </div>
 
-
-
         <!-- Training View -->
         <div id="training-view" class="view">
             <h2><i class="fas fa-dumbbell"></i> Training Session</h2>
@@ -190,7 +186,6 @@
             </div>
         </div>
 
-        
         <!-- Practice View -->
         <div id="practice-view" class="view">
             <h2><i class="fas fa-cards-blank"></i> Practice Mode</h2>
@@ -212,11 +207,17 @@
                         <h3>Flashcards</h3>
                         <p>Click to flip cards and review vocabulary. Perfect for memorization.</p>
                         <div class="practice-mode-buttons">
-                            <button class="btn-primary" onclick="startFlashcards('english')">
-                                🇬🇧 German → English
+                            <button class="btn-primary" onclick="startFlashcards('english', 'german-to-target')">
+                                🇩🇪→🇬🇧 German → English
                             </button>
-                            <button class="btn-primary" onclick="startFlashcards('russian')">
-                                🇷🇺 German → Russian
+                            <button class="btn-primary" onclick="startFlashcards('russian', 'german-to-target')">
+                                🇩🇪→🇷🇺 German → Russian
+                            </button>
+                            <button class="btn-secondary" onclick="startFlashcards('english', 'target-to-german')">
+                                🇬🇧→🇩🇪 English → German
+                            </button>
+                            <button class="btn-secondary" onclick="startFlashcards('russian', 'target-to-german')">
+                                🇷🇺→🇩🇪 Russian → German
                             </button>
                         </div>
                     </div>
@@ -226,11 +227,17 @@
                         <h3>Multiple Choice Quiz</h3>
                         <p>Select the correct translation from 4 options. Test your knowledge!</p>
                         <div class="practice-mode-buttons">
-                            <button class="btn-accent" onclick="startQuiz('english')">
-                                🇬🇧 Quiz: German → English
+                            <button class="btn-accent" onclick="startQuiz('english', 'german-to-target')">
+                                🇩🇪→🇬🇧 Quiz: German → English
                             </button>
-                            <button class="btn-accent" onclick="startQuiz('russian')">
-                                🇷🇺 Quiz: German → Russian
+                            <button class="btn-accent" onclick="startQuiz('russian', 'german-to-target')">
+                                🇩🇪→🇷🇺 Quiz: German → Russian
+                            </button>
+                            <button class="btn-secondary" onclick="startQuiz('english', 'target-to-german')">
+                                🇬🇧→🇩🇪 Quiz: English → German
+                            </button>
+                            <button class="btn-secondary" onclick="startQuiz('russian', 'target-to-german')">
+                                🇷🇺→🇩🇪 Quiz: Russian → German
                             </button>
                         </div>
                     </div>
@@ -238,6 +245,9 @@
         
                 <div class="practice-stats">
                     📖 <span id="practice-word-count">0</span> words in your dictionary
+                    <span id="practice-selected-count-display" style="margin-left: 16px;">
+                        (<span id="practice-selected-count">0</span> selected)
+                    </span>
                 </div>
             </div>
         
@@ -263,7 +273,7 @@
                     <div class="flashcard-wrapper">
                         <div class="flashcard" id="flashcard" onclick="flipCard()">
                             <div class="flashcard-front">
-                                <div class="flashcard-label">German</div>
+                                <div class="flashcard-label" id="flashcard-front-label">German</div>
                                 <div class="flashcard-word" id="flashcard-german">-</div>
                                 <div class="flashcard-type" id="flashcard-type-front">-</div>
                                 <div class="flashcard-hint">Click to flip</div>
@@ -310,7 +320,6 @@
             </div>
         </div>
 
-        
         <!-- Dictionary View -->
         <div id="dictionary-view" class="view">
             <h2><i class="fas fa-book"></i> My Dictionary</h2>
@@ -448,4 +457,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
