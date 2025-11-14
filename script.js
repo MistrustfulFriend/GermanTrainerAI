@@ -230,6 +230,8 @@ function switchView(viewName) {
         renderLog();
     } else if (viewName === 'training') {
         checkTrainingAvailability();
+    } else if (viewName === 'practice') {
+        checkPracticeAvailability();
     }
 }
 
@@ -1317,4 +1319,5 @@ function exitPractice() {
 }
   
 }
+
 
