@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Practice - German Learning</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .backface-hidden { backface-visibility: hidden; }
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Lucide icons as inline SVG components
+        const ChevronLeft = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        );
+        
+        const ChevronRight = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        );
+        
+        const RefreshCw = ({ className = "" }) => (
+            <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        );
+        
+        const Check = ({ className = "" }) => (
+            <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+        
+        const X = ({ className = "" }) => (
+            <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+        
+        const RotateCw = ({ className = "" }) => (
+            <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+        );
+        
+        const Loader = ({ className = "" }) => (
+            <svg className={className} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="12" y1="18" x2="12" y2="22"></line>
+                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                <line x1="2" y1="12" x2="6" y2="12"></line>
+                <line x1="18" y1="12" x2="22" y2="12"></line>
+                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+            </svg>
+        );
+
+        const FlashcardPractice = () => {
+          const [dictionary, setDictionary] = useState([]);
+          const [loading, setLoading] = useState(true);
+          const [error, setError] = useState(null);
+          const [mode, setMode] = useState('menu');
+          const [practiceWords, setPracticeWords] = useState([]);
+          const [currentIndex, setCurrentIndex] = useState(0);
+          const [isFlipped, setIsFlipped] = useState(false);
+          const [selectedAnswer, setSelectedAnswer] = useState(null);
+          const [isCorrect, setIsCorrect] = useState(null);
+          const [score, setScore] = useState({ correct: 0, total: 0 });
+          const [quizOptions, setQuizOptions] = useState([]);
+          const [targetLanguage, setTargetLanguage] = useState('english');
+
+          useEffect(() => {
+            fetchWords();
+          }, []);
+
+          const fetchWords = async () => {
+            try {
+              setLoading(true);
+              setError(null);
+              
+              const response = await fetch('/api/dictionary', {
+                credentials: 'include'
+              });
+              
+              if (!response.ok) {
+                if (response.status === 401) {
+                  window.location.href = '/login.html';
+                  return;
+                }
+                throw new Error('Failed to fetch words');
+              }
+              
+              const data = await response.json();
+              setDictionary(data);
+            } catch (err) {
+              setError(err.message);
+            } finally {
+              setLoading(false);
+            }
+          };
+          
+          const startPractice = (practiceMode, language = 'english') => {
+            const shuffled = [...dictionary].sort(() => Math.random() - 0.5);
+            setPracticeWords(shuffled);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+            setScore({ correct: 0, total: 0 });
+            setMode(practiceMode);
+            setTargetLanguage(language);
+            
+            if (practiceMode === 'quiz') {
+              generateQuizOptions(shuffled[0], shuffled, language);
+            }
+          };
+
+          const generateQuizOptions = (currentWord, allWords, language) => {
+            const incorrectOptions = allWords
+              .filter(w => w._id !== currentWord._id)
+              .sort(() => Math.random() - 0.5)
+              .slice(0, 3)
+              .map(w => w[language]);
+            
+            const options = [...incorrectOptions, currentWord[language]]
+              .sort(() => Math.random() - 0.5);
+            
+            setQuizOptions(options);
+          };
+
+          const handleFlip = () => {
+            setIsFlipped(!isFlipped);
+          };
+
+          const handleNext = () => {
+            if (currentIndex < practiceWords.length - 1) {
+              setCurrentIndex(currentIndex + 1);
+              setIsFlipped(false);
+              setSelectedAnswer(null);
+              setIsCorrect(null);
+              
+              if (mode === 'quiz') {
+                generateQuizOptions(practiceWords[currentIndex + 1], practiceWords, targetLanguage);
+              }
+            }
+          };
+
+          const handlePrevious = () => {
+            if (currentIndex > 0) {
+              setCurrentIndex(currentIndex - 1);
+              setIsFlipped(false);
+              setSelectedAnswer(null);
+              setIsCorrect(null);
+              
+              if (mode === 'quiz') {
+                generateQuizOptions(practiceWords[currentIndex - 1], practiceWords, targetLanguage);
+              }
+            }
+          };
+
+          const handleQuizAnswer = (answer) => {
+            if (selectedAnswer) return;
+            
+            const currentWord = practiceWords[currentIndex];
+            const correct = answer === currentWord[targetLanguage];
+            
+            setSelectedAnswer(answer);
+            setIsCorrect(correct);
+            setScore(prev => ({
+              correct: prev.correct + (correct ? 1 : 0),
+              total: prev.total + 1
+            }));
+          };
+
+          const resetPractice = () => {
+            setMode('menu');
+            setPracticeWords([]);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+            setScore({ correct: 0, total: 0 });
+          };
+
+          const currentWord = practiceWords[currentIndex];
+
+          if (loading) {
+            return (
+              <div className="max-w-2xl mx-auto p-6">
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                  <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600">Loading your dictionary...</p>
+                </div>
+              </div>
+            );
+          }
+
+          if (error && dictionary.length === 0) {
+            return (
+              <div className="max-w-2xl mx-auto p-6">
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                  <X className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">Error Loading Dictionary</h3>
+                  <p className="text-gray-600 mb-4">{error}</p>
+                  <button 
+                    onClick={fetchWords}
+                    className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (dictionary.length === 0) {
+            return (
+              <div className="max-w-2xl mx-auto p-6">
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                  <p className="text-gray-600 mb-4">Your dictionary is empty. Add some words first!</p>
+                  <a href="/" className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition-colors inline-block">
+                    Go to Main App
+                  </a>
+                </div>
+              </div>
+            );
+          }
+
+          if (mode === 'menu') {
+            return (
+              <div className="max-w-2xl mx-auto p-6">
+                <div className="bg-white rounded-lg shadow-lg p-8">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-2 text-center">
+                    Dictionary Practice
+                  </h2>
+                  <p className="text-gray-600 mb-6 text-center">
+                    Choose your practice mode
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div className="border-2 border-blue-200 rounded-lg p-6 hover:border-blue-400 transition-colors">
+                      <div className="flex items-center mb-3">
+                        <RotateCw className="w-6 h-6 text-blue-500 mr-3" />
+                        <h3 className="text-xl font-semibold text-gray-800">Flashcards</h3>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-4">
+                        Click to flip cards and review vocabulary. Perfect for memorization.
+                      </p>
+                      <div className="space-y-2">
+                        <button 
+                          onClick={() => startPractice('flipcard', 'english')}
+                          className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors text-sm">
+                          🇬🇧 Practice German → English
+                        </button>
+                        <button 
+                          onClick={() => startPractice('flipcard', 'russian')}
+                          className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors text-sm">
+                          🇷🇺 Practice German → Russian
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="border-2 border-green-200 rounded-lg p-6 hover:border-green-400 transition-colors">
+                      <div className="flex items-center mb-3">
+                        <Check className="w-6 h-6 text-green-500 mr-3" />
+                        <h3 className="text-xl font-semibold text-gray-800">Multiple Choice Quiz</h3>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-4">
+                        Select the correct translation from 4 options. Test your knowledge!
+                      </p>
+                      <div className="space-y-2">
+                        <button 
+                          onClick={() => startPractice('quiz', 'english')}
+                          className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors text-sm">
+                          🇬🇧 Quiz: German → English
+                        </button>
+                        <button 
+                          onClick={() => startPractice('quiz', 'russian')}
+                          className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors text-sm">
+                          🇷🇺 Quiz: German → Russian
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-center text-gray-500 text-sm">
+                    📖 {dictionary.length} words in your dictionary
+                    <button 
+                      onClick={fetchWords}
+                      className="ml-4 text-blue-500 hover:text-blue-700"
+                    >
+                      <RefreshCw className="w-4 h-4 inline" /> Refresh
+                    </button>
+                  </div>
+                  
+                  <div className="mt-4 text-center">
+                    <a href="/" className="text-blue-500 hover:text-blue-700 text-sm">
+                      ← Back to Main App
+                    </a>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          if (mode === 'flipcard') {
+            return (
+              <div className="max-w-2xl mx-auto p-6">
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <button onClick={resetPractice} className="text-blue-500 hover:text-blue-700 flex items-center">
+                      <ChevronLeft />
+                      <span className="ml-1">Back to Menu</span>
+                    </button>
+                    <div className="text-gray-600 font-medium">
+                      {currentIndex + 1} / {practiceWords.length}
+                    </div>
+                    <button onClick={() => startPractice('flipcard', targetLanguage)} className="text-blue-500 hover:text-blue-700 flex items-center">
+                      <RefreshCw className="w-5 h-5 mr-1" />
+                      Shuffle
+                    </button>
+                  </div>
+
+                  <div className="mb-6 text-center">
+                    <span className="bg-blue-100 text-blue-800 px-4 py-1 rounded-full text-sm font-medium">
+                      {targetLanguage === 'english' ? '🇬🇧 German → English' : '🇷🇺 German → Russian'}
+                    </span>
+                  </div>
+
+                  <div 
+                    className="relative h-80 cursor-pointer perspective-1000"
+                    onClick={handleFlip}
+                    style={{ perspective: '1000px' }}
+                  >
+                    <div 
+                      className="absolute w-full h-full transition-transform duration-500 transform-style-3d"
+                      style={{ 
+                        transformStyle: 'preserve-3d',
+                        transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+                      }}
+                    >
+                      <div 
+                        className="absolute w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-xl flex flex-col items-center justify-center p-8 backface-hidden"
+                        style={{ backfaceVisibility: 'hidden' }}
+                      >
+                        <div className="text-white text-sm font-medium mb-4 uppercase tracking-wide">
+                          German
+                        </div>
+                        <div className="text-white text-4xl font-bold text-center mb-4">
+                          {currentWord?.german}
+                        </div>
+                        <div className="text-blue-200 text-sm">
+                          {currentWord?.type}
+                        </div>
+                        <div className="absolute bottom-6 text-white text-sm opacity-75">
+                          Click to flip
+                        </div>
+                      </div>
+
+                      <div 
+                        className="absolute w-full h-full bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-xl flex flex-col items-center justify-center p-8 backface-hidden"
+                        style={{ 
+                          backfaceVisibility: 'hidden',
+                          transform: 'rotateY(180deg)'
+                        }}
+                      >
+                        <div className="text-white text-sm font-medium mb-4 uppercase tracking-wide">
+                          {targetLanguage === 'english' ? 'English' : 'Russian'}
+                        </div>
+                        <div className="text-white text-4xl font-bold text-center mb-2">
+                          {currentWord?.[targetLanguage]}
+                        </div>
+                        <div className="text-green-200 text-2xl mt-2">
+                          {currentWord?.german}
+                        </div>
+                        <div className="absolute bottom-6 text-white text-sm opacity-75">
+                          Click to flip back
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-8">
+                    <button
+                      onClick={handlePrevious}
+                      disabled={currentIndex === 0}
+                      className="flex items-center px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft />
+                      <span className="ml-1">Previous</span>
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      disabled={currentIndex === practiceWords.length - 1}
+                      className="flex items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <span className="mr-1">Next</span>
+                      <ChevronRight />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          if (mode === 'quiz') {
+            return (
+              <div className="max-w-2xl mx-auto p-6">
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <button onClick={resetPractice} className="text-blue-500 hover:text-blue-700 flex items-center">
+                      <ChevronLeft />
+                      <span className="ml-1">Back to Menu</span>
+                    </button>
+                    <div className="text-gray-600 font-medium">
+                      {currentIndex + 1} / {practiceWords.length}
+                    </div>
+                    <div className="text-green-600 font-bold">
+                      Score: {score.correct}/{score.total}
+                    </div>
+                  </div>
+
+                  <div className="mb-6 text-center">
+                    <span className="bg-green-100 text-green-800 px-4 py-1 rounded-full text-sm font-medium">
+                      {targetLanguage === 'english' ? '🇬🇧 German → English' : '🇷🇺 German → Russian'}
+                    </span>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-xl p-8 mb-6">
+                    <div className="text-white text-sm font-medium mb-4 uppercase tracking-wide text-center">
+                      What does this mean?
+                    </div>
+                    <div className="text-white text-4xl font-bold text-center mb-2">
+                      {currentWord?.german}
+                    </div>
+                    <div className="text-purple-200 text-center text-sm">
+                      {currentWord?.type}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 mb-6">
+                    {quizOptions.map((option, idx) => {
+                      const isSelected = selectedAnswer === option;
+                      const isCorrectAnswer = option === currentWord[targetLanguage];
+                      
+                      let buttonClass = "w-full p-4 text-left rounded-lg border-2 transition-all ";
+                      
+                      if (!selectedAnswer) {
+                        buttonClass += "border-gray-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer";
+                      } else if (isSelected) {
+                        if (isCorrect) {
+                          buttonClass += "border-green-500 bg-green-50 cursor-default";
+                        } else {
+                          buttonClass += "border-red-500 bg-red-50 cursor-default";
+                        }
+                      } else if (isCorrectAnswer) {
+                        buttonClass += "border-green-500 bg-green-50 cursor-default";
+                      } else {
+                        buttonClass += "border-gray-300 opacity-50 cursor-default";
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleQuizAnswer(option)}
+                          disabled={!!selectedAnswer}
+                          className={buttonClass}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-lg">{option}</span>
+                            {selectedAnswer && (
+                              isSelected ? (
+                                isCorrect ? (
+                                  <Check className="w-6 h-6 text-green-600" />
+                                ) : (
+                                  <X className="w-6 h-6 text-red-600" />
+                                )
+                              ) : isCorrectAnswer ? (
+                                <Check className="w-6 h-6 text-green-600" />
+                              ) : null
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedAnswer && (
+                    <div className={`p-4 rounded-lg mb-6 ${isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
+                      <div className="flex items-center mb-2">
+                        {isCorrect ? (
+                          <>
+                            <Check className="w-5 h-5 text-green-600 mr-2" />
+                            <span className="font-bold text-green-800">Correct!</span>
+                          </>
+                        ) : (
+                          <>
+                            <X className="w-5 h-5 text-red-600 mr-2" />
+                            <span className="font-bold text-red-800">Incorrect</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        <strong>{currentWord.german}</strong> = {currentWord[targetLanguage]}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleNext}
+                      disabled={!selectedAnswer || currentIndex === practiceWords.length - 1}
+                      className="flex items-center px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <span className="mr-1">{currentIndex === practiceWords.length - 1 ? 'Finish' : 'Next Question'}</span>
+                      <ChevronRight />
+                    </button>
+                  </div>
+
+                  {currentIndex === practiceWords.length - 1 && selectedAnswer && (
+                    <div className="mt-6 text-center p-6 bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2">Quiz Complete!</h3>
+                      <p className="text-gray-600 text-lg mb-4">
+                        Final Score: <span className="font-bold text-green-600">{score.correct}/{score.total}</span>
+                        {' '}({Math.round((score.correct / score.total) * 100)}%)
+                      </p>
+                      <button
+                        onClick={() => startPractice('quiz', targetLanguage)}
+                        className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
+          return null;
+        };
+        
+        ReactDOM.render(<FlashcardPractice />, document.getElementById('root'));
+    </script>
+</body>
+</html>
