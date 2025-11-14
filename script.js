@@ -1032,4 +1032,289 @@ async function handleFileImport(event) {
     reader.readAsText(file);
     event.target.value = '';
 
+// ==================== PRACTICE MODE ====================
+
+let practiceMode = null; // 'flashcard' or 'quiz'
+let practiceWords = [];
+let practiceIndex = 0;
+let practiceLanguage = 'english'; // 'english' or 'russian'
+let quizScore = { correct: 0, total: 0 };
+let quizAnswered = false;
+
+function checkPracticeAvailability() {
+    const noWordsMsg = document.getElementById('no-words-message');
+    const practiceMenu = document.getElementById('practice-menu');
+    const wordCount = document.getElementById('practice-word-count');
+    
+    if (dictionary.length === 0) {
+        noWordsMsg.style.display = 'block';
+        practiceMenu.style.display = 'none';
+    } else {
+        noWordsMsg.style.display = 'none';
+        practiceMenu.style.display = 'block';
+        wordCount.textContent = dictionary.length;
+    }
 }
+
+function startFlashcards(language) {
+    if (dictionary.length < 1) {
+        alert('You need at least 1 word in your dictionary to practice!');
+        return;
+    }
+    
+    practiceMode = 'flashcard';
+    practiceLanguage = language;
+    practiceWords = [...dictionary].sort(() => Math.random() - 0.5);
+    practiceIndex = 0;
+    
+    document.getElementById('practice-menu').style.display = 'none';
+    document.getElementById('practice-area').style.display = 'block';
+    document.getElementById('flashcard-container').style.display = 'block';
+    document.getElementById('quiz-container').style.display = 'none';
+    
+    updatePracticeLanguageBadge();
+    showFlashcard();
+    addLog(`Started flashcard practice: German → ${language === 'english' ? 'English' : 'Russian'}`);
+}
+
+function startQuiz(language) {
+    if (dictionary.length < 4) {
+        alert('You need at least 4 words in your dictionary for quiz mode!');
+        return;
+    }
+    
+    practiceMode = 'quiz';
+    practiceLanguage = language;
+    practiceWords = [...dictionary].sort(() => Math.random() - 0.5);
+    practiceIndex = 0;
+    quizScore = { correct: 0, total: 0 };
+    quizAnswered = false;
+    
+    document.getElementById('practice-menu').style.display = 'none';
+    document.getElementById('practice-area').style.display = 'block';
+    document.getElementById('flashcard-container').style.display = 'none';
+    document.getElementById('quiz-container').style.display = 'block';
+    
+    updatePracticeLanguageBadge();
+    updateQuizScore();
+    showQuizQuestion();
+    addLog(`Started quiz: German → ${language === 'english' ? 'English' : 'Russian'}`);
+}
+
+function updatePracticeLanguageBadge() {
+    const badge = document.getElementById('practice-language-indicator');
+    const flag = practiceLanguage === 'english' ? '🇬🇧' : '🇷🇺';
+    const lang = practiceLanguage === 'english' ? 'English' : 'Russian';
+    badge.textContent = `${flag} German → ${lang}`;
+    
+    if (practiceMode === 'flashcard') {
+        document.getElementById('flashcard-back-label').textContent = lang;
+    }
+}
+
+function showFlashcard() {
+    const word = practiceWords[practiceIndex];
+    const flashcard = document.getElementById('flashcard');
+    
+    // Remove flipped class
+    flashcard.classList.remove('flipped');
+    
+    // Update content
+    document.getElementById('flashcard-german').textContent = word.german;
+    document.getElementById('flashcard-type-front').textContent = word.type;
+    document.getElementById('flashcard-translation').textContent = word[practiceLanguage];
+    document.getElementById('flashcard-german-back').textContent = word.german;
+    
+    updatePracticeProgress();
+    updatePracticeNavButtons();
+}
+
+function flipCard() {
+    const flashcard = document.getElementById('flashcard');
+    flashcard.classList.toggle('flipped');
+}
+
+function showQuizQuestion() {
+    const word = practiceWords[practiceIndex];
+    quizAnswered = false;
+    
+    // Update question
+    document.getElementById('quiz-german').textContent = word.german;
+    document.getElementById('quiz-type').textContent = word.type;
+    
+    // Generate options
+    const correctAnswer = word[practiceLanguage];
+    const incorrectOptions = practiceWords
+        .filter(w => w.id !== word.id)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+        .map(w => w[practiceLanguage]);
+    
+    const allOptions = [...incorrectOptions, correctAnswer].sort(() => Math.random() - 0.5);
+    
+    // Render options
+    const optionsContainer = document.getElementById('quiz-options');
+    optionsContainer.innerHTML = allOptions.map(option => `
+        <button class="quiz-option" onclick="selectQuizAnswer('${option.replace(/'/g, "\\'")}', '${correctAnswer.replace(/'/g, "\\'")}')">
+            ${option}
+        </button>
+    `).join('');
+    
+    // Hide feedback
+    document.getElementById('quiz-feedback').style.display = 'none';
+    
+    updatePracticeProgress();
+    updatePracticeNavButtons();
+}
+
+function selectQuizAnswer(selected, correct) {
+    if (quizAnswered) return;
+    
+    quizAnswered = true;
+    const isCorrect = selected === correct;
+    
+    // Update score
+    quizScore.total++;
+    if (isCorrect) {
+        quizScore.correct++;
+    }
+    updateQuizScore();
+    
+    // Update button states
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach(button => {
+        button.classList.add('disabled');
+        const buttonText = button.textContent.trim();
+        
+        if (buttonText === selected) {
+            button.classList.add(isCorrect ? 'correct' : 'incorrect');
+        } else if (buttonText === correct) {
+            button.classList.add('show-correct');
+        }
+    });
+    
+    // Show feedback
+    const feedback = document.getElementById('quiz-feedback');
+    const word = practiceWords[practiceIndex];
+    feedback.className = `quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+    feedback.innerHTML = `
+        <div class="quiz-feedback-header">
+            ${isCorrect ? '✅ Correct! 🎉' : '❌ Incorrect'}
+        </div>
+        <div class="quiz-feedback-text">
+            <strong>${word.german}</strong> = ${word[practiceLanguage]}
+        </div>
+    `;
+    feedback.style.display = 'block';
+    
+    // Show completion message if last question
+    if (practiceIndex === practiceWords.length - 1) {
+        setTimeout(() => {
+            showQuizComplete();
+        }, 1500);
+    }
+}
+
+function updateQuizScore() {
+    document.getElementById('quiz-correct').textContent = quizScore.correct;
+    document.getElementById('quiz-total').textContent = quizScore.total;
+}
+
+function showQuizComplete() {
+    const percentage = Math.round((quizScore.correct / quizScore.total) * 100);
+    const feedback = document.getElementById('quiz-feedback');
+    
+    feedback.className = 'quiz-complete';
+    feedback.innerHTML = `
+        <h3>Quiz Complete! 🎊</h3>
+        <div class="quiz-complete-score">
+            Final Score: <strong>${quizScore.correct}/${quizScore.total}</strong> (${percentage}%)
+        </div>
+        <button class="btn-primary" onclick="startQuiz('${practiceLanguage}')">
+            <i class="fas fa-redo"></i> Try Again
+        </button>
+    `;
+    feedback.style.display = 'block';
+}
+
+function updatePracticeProgress() {
+    document.getElementById('practice-current').textContent = practiceIndex + 1;
+    document.getElementById('practice-total').textContent = practiceWords.length;
+}
+
+function updatePracticeNavButtons() {
+    const prevBtn = document.getElementById('practice-prev-btn');
+    const nextBtn = document.getElementById('practice-next-btn');
+    
+    prevBtn.disabled = practiceIndex === 0;
+    
+    if (practiceMode === 'quiz') {
+        nextBtn.disabled = !quizAnswered || practiceIndex === practiceWords.length - 1;
+        nextBtn.innerHTML = practiceIndex === practiceWords.length - 1 ? 
+            '<i class="fas fa-flag-checkered"></i> Finish' : 
+            'Next <i class="fas fa-chevron-right"></i>';
+    } else {
+        nextBtn.disabled = practiceIndex === practiceWords.length - 1;
+        nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+    }
+}
+
+function nextCard() {
+    if (practiceIndex < practiceWords.length - 1) {
+        practiceIndex++;
+        
+        if (practiceMode === 'flashcard') {
+            showFlashcard();
+        } else {
+            showQuizQuestion();
+        }
+    }
+}
+
+function previousCard() {
+    if (practiceIndex > 0) {
+        practiceIndex--;
+        
+        if (practiceMode === 'flashcard') {
+            showFlashcard();
+        } else {
+            // Don't allow going back in quiz mode
+            alert('Cannot go back in quiz mode!');
+            practiceIndex++; // Revert
+        }
+    }
+}
+
+function shufflePractice() {
+    practiceWords = practiceWords.sort(() => Math.random() - 0.5);
+    practiceIndex = 0;
+    
+    if (practiceMode === 'flashcard') {
+        showFlashcard();
+    } else {
+        quizScore = { correct: 0, total: 0 };
+        updateQuizScore();
+        showQuizQuestion();
+    }
+    
+    addLog('Shuffled practice words');
+}
+
+function exitPractice() {
+    document.getElementById('practice-menu').style.display = 'block';
+    document.getElementById('practice-area').style.display = 'none';
+    
+    const flashcard = document.getElementById('flashcard');
+    flashcard.classList.remove('flipped');
+    
+    practiceMode = null;
+    practiceWords = [];
+    practiceIndex = 0;
+    
+    if (quizScore.total > 0) {
+        addLog(`Quiz completed: ${quizScore.correct}/${quizScore.total} correct`);
+    }
+}
+  
+}
+
