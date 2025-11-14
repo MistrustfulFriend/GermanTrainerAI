@@ -223,7 +223,7 @@ function switchView(viewName) {
     } else if (viewName === 'training') {
         checkTrainingAvailability();
     } else if (viewName === 'practice') {
-        // Reset practice state when entering practice view
+        // FIXED: Reset practice state completely when entering practice view
         exitPractice();
         checkPracticeAvailability();
     }
@@ -1109,10 +1109,10 @@ function showFlashcard() {
     const word = practiceWords[practiceIndex];
     const flashcard = document.getElementById('flashcard');
     
-    // Reset flip state BEFORE updating content
+    // FIXED: Reset flip state BEFORE updating content
     flashcard.classList.remove('flipped');
     
-    // Small delay to ensure flip animation completes
+    // Small delay to ensure flip animation completes and content is hidden
     setTimeout(() => {
         if (practiceDirection === 'german-to-target') {
             document.getElementById('flashcard-german').textContent = word.german;
