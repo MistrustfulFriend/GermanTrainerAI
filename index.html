@@ -25,6 +25,9 @@
                 <button class="nav-btn" data-view="training">
                     <i class="fas fa-dumbbell"></i> Training
                 </button>
+                <button class="nav-btn" data-view="practice">
+                    <i class="fas fa-cards-blank"></i> Practice
+                </button>
                 <button class="nav-btn" data-view="dictionary">
                     <i class="fas fa-book"></i> Dictionary
                 </button>
@@ -187,6 +190,127 @@
             </div>
         </div>
 
+        
+        <!-- Practice View -->
+        <div id="practice-view" class="view">
+            <h2><i class="fas fa-cards-blank"></i> Practice Mode</h2>
+            
+            <div id="no-words-message" style="display: none; padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle"></i> Please add words to your dictionary first!
+            </div>
+        
+            <div id="practice-menu" class="practice-container">
+                <div class="practice-intro">
+                    <p class="text-center" style="color: #7f8c8d; margin-bottom: 20px;">
+                        Choose your practice mode to review your dictionary words
+                    </p>
+                </div>
+        
+                <div class="practice-modes">
+                    <div class="practice-mode-card" id="flipcard-card">
+                        <div class="practice-mode-icon">🔄</div>
+                        <h3>Flashcards</h3>
+                        <p>Click to flip cards and review vocabulary. Perfect for memorization.</p>
+                        <div class="practice-mode-buttons">
+                            <button class="btn-primary" onclick="startFlashcards('english')">
+                                🇬🇧 German → English
+                            </button>
+                            <button class="btn-primary" onclick="startFlashcards('russian')">
+                                🇷🇺 German → Russian
+                            </button>
+                        </div>
+                    </div>
+        
+                    <div class="practice-mode-card" id="quiz-card">
+                        <div class="practice-mode-icon">✅</div>
+                        <h3>Multiple Choice Quiz</h3>
+                        <p>Select the correct translation from 4 options. Test your knowledge!</p>
+                        <div class="practice-mode-buttons">
+                            <button class="btn-accent" onclick="startQuiz('english')">
+                                🇬🇧 Quiz: German → English
+                            </button>
+                            <button class="btn-accent" onclick="startQuiz('russian')">
+                                🇷🇺 Quiz: German → Russian
+                            </button>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="practice-stats">
+                    📖 <span id="practice-word-count">0</span> words in your dictionary
+                </div>
+            </div>
+        
+            <div id="practice-area" style="display: none;">
+                <div class="practice-header">
+                    <button class="btn-secondary" onclick="exitPractice()">
+                        <i class="fas fa-arrow-left"></i> Back to Menu
+                    </button>
+                    <div class="practice-progress">
+                        <span id="practice-current">1</span> / <span id="practice-total">0</span>
+                    </div>
+                    <button class="btn-secondary" onclick="shufflePractice()">
+                        <i class="fas fa-shuffle"></i> Shuffle
+                    </button>
+                </div>
+        
+                <div class="practice-language-badge">
+                    <span id="practice-language-indicator"></span>
+                </div>
+        
+                <!-- Flashcard Mode -->
+                <div id="flashcard-container" style="display: none;">
+                    <div class="flashcard-wrapper">
+                        <div class="flashcard" id="flashcard" onclick="flipCard()">
+                            <div class="flashcard-front">
+                                <div class="flashcard-label">German</div>
+                                <div class="flashcard-word" id="flashcard-german">-</div>
+                                <div class="flashcard-type" id="flashcard-type-front">-</div>
+                                <div class="flashcard-hint">Click to flip</div>
+                            </div>
+                            <div class="flashcard-back">
+                                <div class="flashcard-label" id="flashcard-back-label">Translation</div>
+                                <div class="flashcard-word" id="flashcard-translation">-</div>
+                                <div class="flashcard-german-small" id="flashcard-german-back">-</div>
+                                <div class="flashcard-hint">Click to flip back</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Quiz Mode -->
+                <div id="quiz-container" style="display: none;">
+                    <div class="quiz-question-card">
+                        <div class="quiz-question-label">What does this mean?</div>
+                        <div class="quiz-question-word" id="quiz-german">-</div>
+                        <div class="quiz-question-type" id="quiz-type">-</div>
+                    </div>
+        
+                    <div id="quiz-options" class="quiz-options">
+                        <!-- Options will be inserted here -->
+                    </div>
+        
+                    <div id="quiz-feedback" class="quiz-feedback" style="display: none;">
+                        <!-- Feedback will be inserted here -->
+                    </div>
+        
+                    <div class="quiz-score">
+                        Score: <span id="quiz-correct">0</span>/<span id="quiz-total">0</span>
+                    </div>
+                </div>
+        
+                <div class="practice-navigation">
+                    <button class="btn-secondary" id="practice-prev-btn" onclick="previousCard()">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <button class="btn-primary" id="practice-next-btn" onclick="nextCard()">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        
         <!-- Dictionary View -->
         <div id="dictionary-view" class="view">
             <h2><i class="fas fa-book"></i> My Dictionary</h2>
@@ -324,3 +448,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
