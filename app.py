@@ -9,6 +9,9 @@ from pymongo import MongoClient
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, RefreshCw, Check, X, RotateCw, Loader } from 'lucide-react';
+
 
 load_dotenv()
 
@@ -1300,26 +1303,13 @@ def health():
     }), 200
 
 
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, RefreshCw, Check, X, RotateCw } from 'lucide-react';
+
 
 const FlashcardPractice = () => {
-  // This demo shows the UI - integrate with your actual dictionary from MongoDB
-  const [dictionary] = useState([
-    { id: 1, german: 'das Haus (die Häuser)', english: 'house', russian: 'дом', type: 'noun' },
-    { id: 2, german: 'gehen', english: 'to go', russian: 'идти', type: 'verb' },
-    { id: 3, german: 'schön', english: 'beautiful', russian: 'красивый', type: 'adjective' },
-    { id: 4, german: 'das Buch (die Bücher)', english: 'book', russian: 'книга', type: 'noun' },
-    { id: 5, german: 'sprechen', english: 'to speak', russian: 'говорить', type: 'verb' },
-    { id: 6, german: 'schnell', english: 'fast', russian: 'быстрый', type: 'adjective' },
-    { id: 7, german: 'die Katze (die Katzen)', english: 'cat', russian: 'кошка', type: 'noun' },
-    { id: 8, german: 'essen', english: 'to eat', russian: 'есть', type: 'verb' }
-  ]);
-  
-  // In your actual app, load from your dictionary variable:
-  // const dictionary = window.dictionaryData || [];
-
-  const [mode, setMode] = useState('menu'); // 'menu', 'flipcard', 'quiz'
+  const [dictionary, setDictionary] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [mode, setMode] = useState('menu');
   const [practiceWords, setPracticeWords] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -1327,7 +1317,40 @@ const FlashcardPractice = () => {
   const [isCorrect, setIsCorrect] = useState(null);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [quizOptions, setQuizOptions] = useState([]);
-  const [targetLanguage, setTargetLanguage] = useState('english'); // 'english' or 'russian'
+  const [targetLanguage, setTargetLanguage] = useState('english');
+
+  // Fetch words from MongoDB via API
+  useEffect(() => {
+    fetchWords();
+  }, []);
+
+  const fetchWords = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Replace with your actual API endpoint
+      const response = await fetch('http://localhost:5000/api/words');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch words');
+      }
+      
+      const data = await response.json();
+      setDictionary(data);
+    } catch (err) {
+      setError(err.message);
+      // Fallback to demo data if API fails
+      setDictionary([
+        { _id: '1', german: 'das Haus (die Häuser)', english: 'house', russian: 'дом', type: 'noun' },
+        { _id: '2', german: 'gehen', english: 'to go', russian: 'идти', type: 'verb' },
+        { _id: '3', german: 'schön', english: 'beautiful', russian: 'красивый', type: 'adjective' },
+        { _id: '4', german: 'das Buch (die Bücher)', english: 'book', russian: 'книга', type: 'noun' }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const startPractice = (practiceMode, language = 'english') => {
     const shuffled = [...dictionary].sort(() => Math.random() - 0.5);
@@ -1345,7 +1368,7 @@ const FlashcardPractice = () => {
 
   const generateQuizOptions = (currentWord, allWords, language) => {
     const incorrectOptions = allWords
-      .filter(w => w.id !== currentWord.id)
+      .filter(w => w._id !== currentWord._id)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3)
       .map(w => w[language]);
@@ -1387,7 +1410,7 @@ const FlashcardPractice = () => {
   };
 
   const handleQuizAnswer = (answer) => {
-    if (selectedAnswer) return; // Already answered
+    if (selectedAnswer) return;
     
     const currentWord = practiceWords[currentIndex];
     const correct = answer === currentWord[targetLanguage];
@@ -1410,16 +1433,52 @@ const FlashcardPractice = () => {
 
   const currentWord = practiceWords[currentIndex];
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+          <Loader className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading your dictionary...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && dictionary.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+          <X className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Connection Error</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchWords}
+            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (mode === 'menu') {
     return (
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-3xl font-bold text-gray-800 mb-2 text-center">
-            📚 Dictionary Practice
+            Dictionary Practice
           </h2>
-          <p className="text-gray-600 mb-8 text-center">
+          <p className="text-gray-600 mb-2 text-center">
             Choose your practice mode
           </p>
+          {error && (
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded text-sm text-center mb-4">
+              Using demo data (API connection failed)
+            </div>
+          )}
           
           <div className="space-y-4">
             <div className="border-2 border-blue-200 rounded-lg p-6 hover:border-blue-400 transition-colors cursor-pointer"
@@ -1471,6 +1530,12 @@ const FlashcardPractice = () => {
 
           <div className="mt-6 text-center text-gray-500 text-sm">
             📖 {dictionary.length} words in your dictionary
+            <button 
+              onClick={fetchWords}
+              className="ml-4 text-blue-500 hover:text-blue-700"
+            >
+              <RefreshCw className="w-4 h-4 inline" /> Refresh
+            </button>
           </div>
         </div>
       </div>
@@ -1513,7 +1578,6 @@ const FlashcardPractice = () => {
                 transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
               }}
             >
-              {/* Front of card - German */}
               <div 
                 className="absolute w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-xl flex flex-col items-center justify-center p-8 backface-hidden"
                 style={{ backfaceVisibility: 'hidden' }}
@@ -1532,7 +1596,6 @@ const FlashcardPractice = () => {
                 </div>
               </div>
 
-              {/* Back of card - Translation */}
               <div 
                 className="absolute w-full h-full bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-xl flex flex-col items-center justify-center p-8 backface-hidden"
                 style={{ 
@@ -1667,7 +1730,7 @@ const FlashcardPractice = () => {
                 {isCorrect ? (
                   <>
                     <Check className="w-5 h-5 text-green-600 mr-2" />
-                    <span className="font-bold text-green-800">Correct! 🎉</span>
+                    <span className="font-bold text-green-800">Correct!</span>
                   </>
                 ) : (
                   <>
@@ -1695,7 +1758,7 @@ const FlashcardPractice = () => {
 
           {currentIndex === practiceWords.length - 1 && selectedAnswer && (
             <div className="mt-6 text-center p-6 bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Quiz Complete! 🎊</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Quiz Complete!</h3>
               <p className="text-gray-600 text-lg mb-4">
                 Final Score: <span className="font-bold text-green-600">{score.correct}/{score.total}</span>
                 {' '}({Math.round((score.correct / score.total) * 100)}%)
@@ -1720,6 +1783,10 @@ export default FlashcardPractice;
 
 
 
+
+
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"\n{'='*50}")
@@ -1730,5 +1797,6 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
