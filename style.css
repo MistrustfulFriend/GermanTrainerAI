@@ -1010,3 +1010,367 @@ input[type="file"] {
         flex-wrap: wrap;
     }
 }
+
+
+/* ==================== PRACTICE MODE STYLES ==================== */
+
+.practice-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.practice-intro {
+    margin-bottom: 30px;
+}
+
+.practice-modes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.practice-mode-card {
+    background: white;
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.practice-mode-card:hover {
+    border-color: #3498db;
+    box-shadow: 0 8px 16px rgba(52, 152, 219, 0.2);
+    transform: translateY(-4px);
+}
+
+.practice-mode-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.practice-mode-card h3 {
+    margin-bottom: 12px;
+    color: #2c3e50;
+    justify-content: center;
+}
+
+.practice-mode-card p {
+    color: #7f8c8d;
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.practice-mode-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.practice-mode-buttons button {
+    width: 100%;
+    justify-content: center;
+}
+
+.practice-stats {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 14px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.practice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.practice-progress {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.practice-language-badge {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.practice-language-badge span {
+    background: #3498db;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Flashcard Styles */
+.flashcard-wrapper {
+    perspective: 1000px;
+    margin-bottom: 40px;
+}
+
+.flashcard {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+}
+
+.flashcard.flipped {
+    transform: rotateY(180deg);
+}
+
+.flashcard-front,
+.flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.flashcard-front {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+}
+
+.flashcard-back {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    color: white;
+    transform: rotateY(180deg);
+}
+
+.flashcard-label {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+.flashcard-word {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.flashcard-type {
+    font-size: 16px;
+    opacity: 0.8;
+    margin-bottom: 20px;
+}
+
+.flashcard-german-small {
+    font-size: 24px;
+    margin-top: 12px;
+    opacity: 0.9;
+}
+
+.flashcard-hint {
+    position: absolute;
+    bottom: 24px;
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* Quiz Styles */
+.quiz-question-card {
+    background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 24px rgba(142, 68, 173, 0.3);
+}
+
+.quiz-question-label {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+.quiz-question-word {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.quiz-question-type {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.quiz-option {
+    padding: 20px;
+    border: 2px solid #dfe6e9;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 18px;
+    text-align: left;
+}
+
+.quiz-option:hover:not(.disabled) {
+    border-color: #3498db;
+    background: #f8fbff;
+    transform: translateX(4px);
+}
+
+.quiz-option.correct {
+    border-color: #27ae60;
+    background: #e8f5e9;
+}
+
+.quiz-option.incorrect {
+    border-color: #e74c3c;
+    background: #ffebee;
+}
+
+.quiz-option.disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.quiz-option.show-correct {
+    border-color: #27ae60;
+    background: #e8f5e9;
+}
+
+.quiz-feedback {
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.quiz-feedback.correct {
+    background: #e8f5e9;
+    border: 2px solid #27ae60;
+    color: #1e7e34;
+}
+
+.quiz-feedback.incorrect {
+    background: #ffebee;
+    border: 2px solid #e74c3c;
+    color: #c0392b;
+}
+
+.quiz-feedback-header {
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quiz-feedback-text {
+    font-size: 14px;
+}
+
+.quiz-score {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: #27ae60;
+    padding: 16px;
+    background: #e8f5e9;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.practice-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.practice-navigation button {
+    flex: 1;
+}
+
+/* Quiz Complete */
+.quiz-complete {
+    text-align: center;
+    padding: 40px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 16px;
+    color: white;
+    margin-top: 30px;
+}
+
+.quiz-complete h3 {
+    font-size: 32px;
+    margin-bottom: 16px;
+    color: white;
+}
+
+.quiz-complete-score {
+    font-size: 24px;
+    margin-bottom: 24px;
+}
+
+/* Mobile Responsive */
+@media screen and (max-width: 768px) {
+    .practice-modes {
+        grid-template-columns: 1fr;
+    }
+
+    .flashcard {
+        height: 350px;
+    }
+
+    .flashcard-word {
+        font-size: 36px;
+    }
+
+    .quiz-question-word {
+        font-size: 36px;
+    }
+
+    .quiz-option {
+        font-size: 16px;
+        padding: 16px;
+    }
+
+    .practice-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .practice-navigation {
+        flex-direction: column;
+    }
+}
