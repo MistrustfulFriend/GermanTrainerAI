@@ -17,6 +17,14 @@ let selectedDictionaryWords = new Set();
 let touchTimer = null;
 let touchStartPos = { x: 0, y: 0 };
 
+// Practice state
+let practiceMode = null;
+let practiceWords = [];
+let practiceIndex = 0;
+let practiceLanguage = 'english';
+let quizScore = { correct: 0, total: 0 };
+let quizAnswered = false;
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     console.log('App initialized - MongoDB version with Auth');
@@ -34,7 +42,6 @@ async function checkAuthentication() {
             console.log('Logged in as:', currentUser.user.username);
             initializeApp();
         } else {
-            // Not authenticated, redirect to login
             window.location.href = '/login.html';
         }
     } catch (error) {
@@ -44,8 +51,8 @@ async function checkAuthentication() {
 }
 
 function initializeApp() {
-    loadLocalSettings();  // Only load topics/settings from localStorage
-    loadServerData();     // Load dictionary and log from server
+    loadLocalSettings();
+    loadServerData();
     initializeEventListeners();
     updateUI();
     testBackendConnection();
@@ -77,7 +84,6 @@ async function handleLogout() {
                 method: 'POST',
                 credentials: 'include'
             });
-            // Clear local storage on logout
             localStorage.clear();
             window.location.href = '/login.html';
         } catch (error) {
@@ -104,12 +110,10 @@ async function testBackendConnection() {
     }
 }
 
-// Load user-specific data from server
 async function loadServerData() {
     try {
         showLoading(true);
         
-        // Load dictionary from server
         const dictResponse = await apiRequest(`${API_URL}/api/dictionary`, {
             credentials: 'include'
         });
@@ -119,7 +123,6 @@ async function loadServerData() {
             console.log(`✓ Loaded ${dictionary.length} words from server`);
         }
         
-        // Load log from server
         const logResponse = await apiRequest(`${API_URL}/api/log`, {
             credentials: 'include'
         });
@@ -136,9 +139,7 @@ async function loadServerData() {
     }
 }
 
-// Load only local settings (not user data)
 function loadLocalSettings() {
-    // Only load topics and custom text - these are per-browser settings
     const savedTopics = localStorage.getItem('selectedTopics');
     if (savedTopics) selectedTopics = JSON.parse(savedTopics);
     
@@ -164,9 +165,7 @@ async function apiRequest(url, options = {}) {
     }
 }
 
-// Event Listeners
 function initializeEventListeners() {
-    // Navigation
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -174,16 +173,13 @@ function initializeEventListeners() {
         });
     });
 
-    // Topics
     document.getElementById('save-topics-btn').addEventListener('click', saveTopics);
     document.getElementById('select-all-topics-btn').addEventListener('click', selectAllTopics);
     document.getElementById('deselect-all-topics-btn').addEventListener('click', deselectAllTopics);
     
-    // Training
     document.getElementById('start-exercise-btn').addEventListener('click', startExercise);
     document.getElementById('practice-selected-btn').addEventListener('click', practiceSelectedWords);
     
-    // Dictionary
     document.getElementById('manual-add-btn').addEventListener('click', () => openManualAddModal());
     document.getElementById('search-dictionary').addEventListener('input', filterDictionary);
     document.getElementById('filter-type').addEventListener('change', filterDictionary);
@@ -191,7 +187,6 @@ function initializeEventListeners() {
     document.getElementById('select-all-words-btn').addEventListener('click', selectAllWords);
     document.getElementById('deselect-all-words-btn').addEventListener('click', deselectAllWords);
     
-    // Modals
     document.getElementById('close-modal-btn').addEventListener('click', closeWordModal);
     document.getElementById('add-selected-word-btn').addEventListener('click', addSelectedWord);
     document.getElementById('close-manual-modal-btn').addEventListener('click', closeManualModal);
@@ -199,15 +194,12 @@ function initializeEventListeners() {
     document.getElementById('close-edit-modal-btn').addEventListener('click', closeEditModal);
     document.getElementById('save-edit-word-btn').addEventListener('click', saveEditWord);
     
-    // Log
     document.getElementById('clear-log-btn').addEventListener('click', clearLog);
     
-    // Import/Export
     document.getElementById('export-dictionary-btn').addEventListener('click', exportDictionary);
     document.getElementById('import-dictionary-btn').addEventListener('click', importDictionary);
     document.getElementById('import-file-input').addEventListener('change', handleFileImport);
 
-    // Collapsible topic sections
     document.querySelectorAll('.topic-section-header').forEach(header => {
         header.addEventListener('click', function() {
             const section = this.parentElement;
@@ -216,7 +208,6 @@ function initializeEventListeners() {
     });
 }
 
-// Navigation
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -235,7 +226,6 @@ function switchView(viewName) {
     }
 }
 
-// Topics Management
 function selectAllTopics() {
     document.querySelectorAll('.topic-checkbox').forEach(cb => cb.checked = true);
 }
@@ -253,7 +243,6 @@ function saveTopics() {
         category: cb.dataset.category
     }));
     
-    // Save to localStorage (per-browser settings)
     localStorage.setItem('selectedTopics', JSON.stringify(selectedTopics));
     localStorage.setItem('customPracticeText', customPracticeText);
     
@@ -283,7 +272,6 @@ function saveTopics() {
     }, 4000);
 }
 
-// Training
 function checkTrainingAvailability() {
     const noTopicsMsg = document.getElementById('no-topics-message');
     const trainingArea = document.getElementById('training-area');
@@ -422,35 +410,25 @@ function renderExercise(exercise) {
     `;
     
     const exerciseText = document.getElementById('exercise-text');
-    
-    // Desktop: double-click
     exerciseText.addEventListener('dblclick', handleWordSelection);
-    
-    // Mobile: long-press (tap and hold)
     exerciseText.addEventListener('touchstart', handleTouchStart, { passive: false });
     exerciseText.addEventListener('touchend', handleTouchEnd);
     exerciseText.addEventListener('touchmove', handleTouchMove);
 }
 
 function handleTouchStart(event) {
-    // Record starting position
     const touch = event.touches[0];
     touchStartPos = {
         x: touch.clientX,
         y: touch.clientY
     };
     
-    // Start long-press timer (500ms)
     touchTimer = setTimeout(() => {
-        // Trigger word selection after long press
         handleWordSelectionFromTouch(event);
     }, 500);
 }
 
-
-
 function handleTouchMove(event) {
-    // If user moves finger, cancel the long-press
     if (touchTimer) {
         const touch = event.touches[0];
         const moveDistance = Math.sqrt(
@@ -458,7 +436,6 @@ function handleTouchMove(event) {
             Math.pow(touch.clientY - touchStartPos.y, 2)
         );
         
-        // Cancel if moved more than 10px
         if (moveDistance > 10) {
             clearTimeout(touchTimer);
             touchTimer = null;
@@ -467,7 +444,6 @@ function handleTouchMove(event) {
 }
 
 function handleTouchEnd(event) {
-    // Cancel timer if touch ended before long-press completed
     if (touchTimer) {
         clearTimeout(touchTimer);
         touchTimer = null;
@@ -477,24 +453,20 @@ function handleTouchEnd(event) {
 function handleWordSelectionFromTouch(event) {
     event.preventDefault();
     
-    // Get word at touch position
     const touch = event.touches[0];
     const range = document.caretRangeFromPoint(touch.clientX, touch.clientY);
     
     if (range) {
-        // Expand selection to word boundaries
         const textNode = range.startContainer;
         if (textNode.nodeType === Node.TEXT_NODE) {
             const text = textNode.textContent;
             let start = range.startOffset;
             let end = range.startOffset;
             
-            // Find word start
             while (start > 0 && /\S/.test(text[start - 1])) {
                 start--;
             }
             
-            // Find word end
             while (end < text.length && /\S/.test(text[end])) {
                 end++;
             }
@@ -502,7 +474,6 @@ function handleWordSelectionFromTouch(event) {
             const word = text.substring(start, end).trim();
             
             if (word && word.length > 0 && word.split(' ').length <= 3) {
-                // Provide haptic feedback if available
                 if (navigator.vibrate) {
                     navigator.vibrate(50);
                 }
@@ -513,7 +484,6 @@ function handleWordSelectionFromTouch(event) {
     }
 }
 
-
 function handleWordSelection(event) {
     const selection = window.getSelection();
     const selectedText = selection.toString().trim();
@@ -523,17 +493,12 @@ function handleWordSelection(event) {
     }
 }
 
-
-
-
-
 function openWordModal(word) {
     const modal = document.getElementById('word-selection-modal');
     document.getElementById('word-context').textContent = `Selected: "${word}"`;
     document.getElementById('selected-word-input').value = word;
     modal.classList.add('active');
     
-    // Focus input on desktop, but not on mobile to avoid keyboard
     if (window.innerWidth > 768) {
         setTimeout(() => {
             document.getElementById('selected-word-input').focus();
@@ -587,7 +552,6 @@ async function addSelectedWord() {
             timestamp: new Date().toISOString()
         };
 
-        // Add to server
         const addResponse = await apiRequest(`${API_URL}/api/dictionary`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -654,7 +618,6 @@ function displayFeedback(result) {
     feedbackDiv.innerHTML = result.feedback.replace(/\n/g, '<br>');
 }
 
-// Dictionary Management
 function openEditModal(id) {
     const word = dictionary.find(w => w.id === id);
     if (!word) return;
@@ -730,7 +693,6 @@ function deselectAllWords() {
     renderDictionary();
 }
 
-// Manual Dictionary Add
 function openManualAddModal() {
     document.getElementById('manual-add-modal').classList.add('active');
 }
@@ -890,7 +852,6 @@ function showDictionaryMessage(text, type) {
     }, 3000);
 }
 
-// Log Management
 async function addLog(content) {
     learningLog.unshift({
         id: Date.now(),
@@ -898,7 +859,6 @@ async function addLog(content) {
         content: content
     });
     
-    // Save to server
     await apiRequest(`${API_URL}/api/log`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -950,7 +910,6 @@ function showLoading(show) {
     document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
 }
 
-// Export Dictionary
 function exportDictionary() {
     if (dictionary.length === 0) {
         alert('Your dictionary is empty. Nothing to export.');
@@ -969,7 +928,6 @@ function exportDictionary() {
     showDictionaryMessage(`Exported ${dictionary.length} words successfully!`, 'success');
 }
 
-// Import Dictionary
 function importDictionary() {
     document.getElementById('import-file-input').click();
 }
@@ -998,10 +956,8 @@ async function handleFileImport(event) {
                 let addedCount = 0;
                 
                 for (const word of importedData) {
-                    // Check if word already exists
                     const exists = dictionary.some(w => w.german === word.german);
                     if (!exists) {
-                        // Add to server
                         const response = await apiRequest(`${API_URL}/api/dictionary`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1033,15 +989,9 @@ async function handleFileImport(event) {
     };
     reader.readAsText(file);
     event.target.value = '';
+}
 
-// ==================== PRACTICE MODE ====================
-
-let practiceMode = null; // 'flashcard' or 'quiz'
-let practiceWords = [];
-let practiceIndex = 0;
-let practiceLanguage = 'english'; // 'english' or 'russian'
-let quizScore = { correct: 0, total: 0 };
-let quizAnswered = false;
+// ==================== PRACTICE MODE FUNCTIONS ====================
 
 function checkPracticeAvailability() {
     const noWordsMsg = document.getElementById('no-words-message');
@@ -1118,10 +1068,8 @@ function showFlashcard() {
     const word = practiceWords[practiceIndex];
     const flashcard = document.getElementById('flashcard');
     
-    // Remove flipped class
     flashcard.classList.remove('flipped');
     
-    // Update content
     document.getElementById('flashcard-german').textContent = word.german;
     document.getElementById('flashcard-type-front').textContent = word.type;
     document.getElementById('flashcard-translation').textContent = word[practiceLanguage];
@@ -1140,11 +1088,9 @@ function showQuizQuestion() {
     const word = practiceWords[practiceIndex];
     quizAnswered = false;
     
-    // Update question
     document.getElementById('quiz-german').textContent = word.german;
     document.getElementById('quiz-type').textContent = word.type;
     
-    // Generate options
     const correctAnswer = word[practiceLanguage];
     const incorrectOptions = practiceWords
         .filter(w => w.id !== word.id)
@@ -1154,7 +1100,6 @@ function showQuizQuestion() {
     
     const allOptions = [...incorrectOptions, correctAnswer].sort(() => Math.random() - 0.5);
     
-    // Render options
     const optionsContainer = document.getElementById('quiz-options');
     optionsContainer.innerHTML = allOptions.map(option => `
         <button class="quiz-option" onclick="selectQuizAnswer('${option.replace(/'/g, "\\'")}', '${correctAnswer.replace(/'/g, "\\'")}')">
@@ -1162,7 +1107,6 @@ function showQuizQuestion() {
         </button>
     `).join('');
     
-    // Hide feedback
     document.getElementById('quiz-feedback').style.display = 'none';
     
     updatePracticeProgress();
@@ -1175,14 +1119,12 @@ function selectQuizAnswer(selected, correct) {
     quizAnswered = true;
     const isCorrect = selected === correct;
     
-    // Update score
     quizScore.total++;
     if (isCorrect) {
         quizScore.correct++;
     }
     updateQuizScore();
     
-    // Update button states
     const options = document.querySelectorAll('.quiz-option');
     options.forEach(button => {
         button.classList.add('disabled');
@@ -1195,7 +1137,6 @@ function selectQuizAnswer(selected, correct) {
         }
     });
     
-    // Show feedback
     const feedback = document.getElementById('quiz-feedback');
     const word = practiceWords[practiceIndex];
     feedback.className = `quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}`;
@@ -1209,7 +1150,6 @@ function selectQuizAnswer(selected, correct) {
     `;
     feedback.style.display = 'block';
     
-    // Show completion message if last question
     if (practiceIndex === practiceWords.length - 1) {
         setTimeout(() => {
             showQuizComplete();
@@ -1280,9 +1220,8 @@ function previousCard() {
         if (practiceMode === 'flashcard') {
             showFlashcard();
         } else {
-            // Don't allow going back in quiz mode
             alert('Cannot go back in quiz mode!');
-            practiceIndex++; // Revert
+            practiceIndex++;
         }
     }
 }
@@ -1317,7 +1256,3 @@ function exitPractice() {
         addLog(`Quiz completed: ${quizScore.correct}/${quizScore.total} correct`);
     }
 }
-  
-}
-
-
