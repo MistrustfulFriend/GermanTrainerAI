@@ -581,15 +581,14 @@ IMPORTANT:
         print(f"Error generating exercise: {e}")
         return f"Error generating exercise: {str(e)}"
 
+# Split into separate functions for each exercise type
 
-def check_answer(question, answer, exercise_type):
-    """Check answers with structured, helpful feedback"""
-    
+def check_translation_answer(question, answer):
+    """Check translation exercise answers"""
     if not openai.api_key:
         return "Error: OpenAI API key not configured."
     
-    prompts = {
-        'translation': f"""Evaluate this German translation exercise.
+    prompt = f"""Evaluate this German translation exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWER: {answer}
@@ -608,9 +607,29 @@ Provide feedback in English with this structure:
 
 4. TIP: [One helpful mnemonic or learning tip]
 
-Be encouraging but honest. Focus on learning, not just praise.""",
-            
-        'conversation': f"""Evaluate this German conversation response.
+Be encouraging but honest. Focus on learning, not just praise."""
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a German language teacher providing structured, helpful feedback."},
+                {"role": "user", "content": prompt}
+            ],
+            max_completion_tokens=1000,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error checking translation: {str(e)}"
+
+
+def check_conversation_answer(question, answer):
+    """Check conversation exercise answers"""
+    if not openai.api_key:
+        return "Error: OpenAI API key not configured."
+    
+    prompt = f"""Evaluate this German conversation response.
 
 SCENARIO: {question}
 STUDENT'S RESPONSE: {answer}
@@ -630,9 +649,29 @@ Provide feedback in English with this structure:
 
 4. TIP: [One practical improvement for future responses]
 
-Be constructive and supportive.""",
-        
-        'grammar': f"""Evaluate this German grammar exercise.
+Be constructive and supportive."""
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a German conversation coach providing practical feedback."},
+                {"role": "user", "content": prompt}
+            ],
+            max_completion_tokens=1200,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error checking conversation: {str(e)}"
+
+
+def check_grammar_answer(question, answer):
+    """Check grammar exercise answers"""
+    if not openai.api_key:
+        return "Error: OpenAI API key not configured."
+    
+    prompt = f"""Evaluate this German grammar exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWER: {answer}
@@ -651,9 +690,29 @@ Provide feedback in English with this structure:
 
 4. MEMORY TRICK: [Provide a helpful mnemonic or pattern to remember]
 
-Be clear and educational.""",
-        
-        'vocabulary': f"""Evaluate this German vocabulary exercise.
+Be clear and educational."""
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a German grammar expert providing clear explanations."},
+                {"role": "user", "content": prompt}
+            ],
+            max_completion_tokens=1000,
+            temperature=0.6
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error checking grammar: {str(e)}"
+
+
+def check_vocabulary_answer(question, answer):
+    """Check vocabulary exercise answers"""
+    if not openai.api_key:
+        return "Error: OpenAI API key not configured."
+    
+    prompt = f"""Evaluate this German vocabulary exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWERS: {answer}
@@ -671,9 +730,29 @@ Provide feedback in English with this structure:
 
 4. TIP: [Memory technique or learning suggestion]
 
-Be encouraging and informative.""",
+Be encouraging and informative."""
 
-        'listening_practice': f"""Evaluate answers to this German listening comprehension exercise.
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a German vocabulary teacher making learning engaging."},
+                {"role": "user", "content": prompt}
+            ],
+            max_completion_tokens=900,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error checking vocabulary: {str(e)}"
+
+
+def check_listening_answer(question, answer):
+    """Check listening comprehension answers"""
+    if not openai.api_key:
+        return "Error: OpenAI API key not configured."
+    
+    prompt = f"""Evaluate answers to this German listening comprehension exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWERS: {answer}
@@ -695,9 +774,29 @@ Provide feedback in English with this structure:
 
 4. LISTENING TIP: [Specific advice for improving German listening skills]
 
-Be encouraging and focus on comprehension strategies.""",
+Be encouraging and focus on comprehension strategies."""
 
-        'creative_writing': f"""Evaluate this German creative writing exercise.
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a German listening comprehension instructor."},
+                {"role": "user", "content": prompt}
+            ],
+            max_completion_tokens=1100,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error checking listening: {str(e)}"
+
+
+def check_creative_writing_answer(question, answer):
+    """Check creative writing answers"""
+    if not openai.api_key:
+        return "Error: OpenAI API key not configured."
+    
+    prompt = f"""Evaluate this German creative writing exercise.
 
 EXERCISE: {question}
 STUDENT'S WRITING: {answer}
@@ -724,9 +823,29 @@ Provide feedback in English with this structure:
 
 6. ENCOURAGEMENT: [Positive note about what worked well]
 
-Be supportive and constructive. Focus on both content and language.""",
+Be supportive and constructive. Focus on both content and language."""
 
-        'error_correction': f"""Evaluate this German error correction exercise.
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a creative writing instructor for German learners."},
+                {"role": "user", "content": prompt}
+            ],
+            max_completion_tokens=1400,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error checking creative writing: {str(e)}"
+
+
+def check_error_correction_answer(question, answer):
+    """Check error correction exercise answers"""
+    if not openai.api_key:
+        return "Error: OpenAI API key not configured."
+    
+    prompt = f"""Evaluate this German error correction exercise.
 
 ORIGINAL EXERCISE: {question}
 STUDENT'S CORRECTIONS: {answer}
@@ -750,27 +869,82 @@ Provide feedback in English with this structure:
 4. LEARNING POINT: [Key takeaway about common German mistakes]
 
 Be clear and educational. Help them understand WHY errors occur."""
-    }
-    
+
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",  # Keep your model name
+            model="gpt-4o-mini",
             messages=[
-                {
-                    "role": "system", 
-                    "content": "You are a German language teacher providing structured, helpful feedback. Follow the format exactly. Be supportive but accurate—don't say something is correct if it isn't. Provide clear explanations that help students understand and improve."
-                },
-                {"role": "user", "content": prompts.get(exercise_type, prompts['translation'])}
+                {"role": "system", "content": "You are a German error correction specialist helping students learn."},
+                {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=3000
+            max_completion_tokens=1300,
+            temperature=0.6
         )
-        
         return response.choices[0].message.content.strip()
-        
     except Exception as e:
-        print(f"Error checking answer: {e}")
-        return f"Error checking answer: {str(e)}"  # ✅ THIS IS THE KEY FIX
+        return f"Error checking error correction: {str(e)}"
 
+
+def check_dictionary_practice_answer(question, answer):
+    """Check dictionary practice answers"""
+    if not openai.api_key:
+        return "Error: OpenAI API key not configured."
+    
+    prompt = f"""Evaluate this German dictionary practice exercise.
+
+EXERCISE: {question}
+STUDENT'S ANSWER: {answer}
+
+REQUIREMENTS:
+Provide feedback in English with this structure:
+
+1. ASSESSMENT: [Excellent/Good/Needs Improvement]
+
+2. EVALUATION:
+   - Correct usage: [Which dictionary words were used correctly]
+   - Errors: [Mistakes in word usage, if any]
+   - Missing words: [Dictionary words not used or used incorrectly]
+
+3. CORRECTIONS: [Provide corrected version if needed]
+
+4. USAGE NOTES: [Brief notes on proper usage of the dictionary words]
+
+5. TIP: [How to better remember and use these words]
+
+Be supportive and help reinforce their vocabulary."""
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a German vocabulary practice instructor."},
+                {"role": "user", "content": prompt}
+            ],
+            max_completion_tokens=1100,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error checking dictionary practice: {str(e)}"
+
+
+# Main dispatcher function - REPLACE the old check_answer()
+def check_answer(question, answer, exercise_type):
+    """Route to appropriate checking function based on exercise type"""
+    
+    checkers = {
+        'translation': check_translation_answer,
+        'conversation': check_conversation_answer,
+        'grammar': check_grammar_answer,
+        'vocabulary': check_vocabulary_answer,
+        'listening_practice': check_listening_answer,
+        'creative_writing': check_creative_writing_answer,
+        'error_correction': check_error_correction_answer,
+        'dictionary_practice': check_dictionary_practice_answer
+    }
+    
+    checker_function = checkers.get(exercise_type, check_translation_answer)
+    return checker_function(question, answer)
 
 
 def analyze_word(word, context):
@@ -1314,6 +1488,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
