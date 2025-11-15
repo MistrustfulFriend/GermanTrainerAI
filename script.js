@@ -597,19 +597,23 @@ async function submitAnswer() {
             })
         });
         
-        if (!response) return;
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to check answer');
+        if (!response) {
+            displayFeedback({ error: 'No response from server' });
+            return;
         }
         
         const result = await response.json();
-        displayFeedback(result);
-        addLog(`Completed exercise`);
+        console.log('Check answer response:', result); // Debug log
+        
+        if (!response.ok) {
+            displayFeedback({ error: result.error || 'Failed to check answer' });
+        } else {
+            displayFeedback(result);
+            addLog(`Completed exercise`);
+        }
     } catch (error) {
         console.error('Error:', error);
-        alert(`Failed to check answer: ${error.message}`);
+        displayFeedback({ error: `Failed to check answer: ${error.message}` });
     } finally {
         showLoading(false);
     }
@@ -617,8 +621,33 @@ async function submitAnswer() {
 
 function displayFeedback(result) {
     const feedbackDiv = document.getElementById('exercise-feedback');
+    
+    console.log('displayFeedback called with:', result); // Debug log
+    
+    if (!feedbackDiv) {
+        console.error('Feedback div not found!');
+        return;
+    }
+    
+    // Handle both success (result.feedback) and error (result.error) cases
+    const feedbackText = result.feedback || result.error || 'No feedback available';
+    
+    if (!feedbackText) {
+        console.error('No feedback text found in result:', result);
+        feedbackDiv.className = 'exercise-feedback error-feedback';
+        feedbackDiv.innerHTML = '<strong>Error:</strong> No feedback received from server';
+        feedbackDiv.style.display = 'block';
+        return;
+    }
+    
+    console.log('Displaying feedback:', feedbackText);
+    
     feedbackDiv.className = 'exercise-feedback';
-    feedbackDiv.innerHTML = result.feedback.replace(/\n/g, '<br>');
+    feedbackDiv.innerHTML = feedbackText.replace(/\n/g, '<br>');
+    feedbackDiv.style.display = 'block'; // Make sure it's visible
+    
+    // Scroll to feedback
+    feedbackDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function openEditModal(id) {
@@ -1330,4 +1359,5 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
