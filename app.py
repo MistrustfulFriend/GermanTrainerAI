@@ -9,6 +9,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
+import json
 
 
 load_dotenv()
@@ -1306,22 +1307,7 @@ def check_answer_route():
         # Streaming generator
         def generate():
             try:
-                # Call the appropriate checking function based on exercise_type
-                # These functions already have the right prompts!
-                checkers = {
-                    'translation': check_translation_answer,
-                    'conversation': check_conversation_answer,
-                    'grammar': check_grammar_answer,
-                    'vocabulary': check_vocabulary_answer,
-                    'listening_practice': check_listening_answer,
-                    'creative_writing': check_creative_writing_answer,
-                    'error_correction': check_error_correction_answer,
-                    'dictionary_practice': check_dictionary_practice_answer
-                }
-                
-                checker_function = checkers.get(exercise_type, check_translation_answer)
-                
-                # Get the prompt and system message from the checker function
+                # Get the prompt and system message
                 prompt, system_msg = get_checker_prompt_and_system(exercise_type, question, answer)
                 
                 # Stream the response
@@ -1357,8 +1343,7 @@ def check_answer_route():
     except Exception as e:
         print(f"Error in check_answer_route: {e}")
         return jsonify({"error": str(e)}), 500
-
-
+        
 @app.route('/analyze-word', methods=['POST', 'OPTIONS'])
 @login_required
 def analyze_word_route():
@@ -1406,6 +1391,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
