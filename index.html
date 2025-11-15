@@ -30,11 +30,56 @@
                 <button class="nav-btn" data-view="dictionary">
                     <i class="fas fa-book"></i> Dictionary
                 </button>
+
+                <button class="nav-btn" data-view="chat">
+                    <i class="fas fa-comments"></i> Teacher Chat
+                </button>
                 <button class="nav-btn" data-view="log">
                     <i class="fas fa-clipboard-list"></i> Log
                 </button>
             </nav>
         </header>
+
+        <div id="chat-view" class="view">
+            <h2><i class="fas fa-comments"></i> German Teacher Chat</h2>
+            
+            <div class="chat-intro">
+                <p>Ask me anything about German language! I'm here to help with grammar, vocabulary, pronunciation, culture, and more.</p>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-message assistant">
+                        <div class="message-avatar">🎓</div>
+                        <div class="message-content">
+                            <strong>German Teacher</strong>
+                            <p>Hallo! I'm your German language teacher. Ask me anything about German - grammar rules, vocabulary, pronunciation, culture, or practice conversations. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chat-input" 
+                        class="chat-input" 
+                        placeholder="Ask about German grammar, vocabulary, phrases, culture..."
+                        rows="2"
+                    ></textarea>
+                    <button class="btn-primary chat-send-btn" onclick="sendChatMessage()">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-actions">
+                <button class="btn-secondary" onclick="clearChat()">
+                    <i class="fas fa-trash"></i> Clear Chat
+                </button>
+                <button class="btn-secondary" onclick="exportChat()">
+                    <i class="fas fa-download"></i> Export Chat
+                </button>
+            </div>
+        </div>
 
         <!-- Topics View -->
         <div id="topics-view" class="view active">
@@ -457,3 +502,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
