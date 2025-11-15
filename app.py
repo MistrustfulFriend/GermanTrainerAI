@@ -762,7 +762,7 @@ Be clear and educational. Help them understand WHY errors occur."""
                 },
                 {"role": "user", "content": prompts.get(exercise_type, prompts['translation'])}
             ],
-            max_completion_tokens=2000
+            max_completion_tokens=1000
         )
         
         return response.choices[0].message.content.strip()
@@ -1314,6 +1314,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
