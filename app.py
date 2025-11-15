@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, session, stream_with_context, Response
+ from flask import Flask, request, jsonify, send_file, session, stream_with_context, Response
 from flask_cors import CORS
 import openai
 import os
@@ -1381,6 +1381,92 @@ def health():
 def flashcards_page():
     return send_file('flashcards.html')
 
+
+# Add this route to your Flask app (app.py)
+
+@app.route('/api/chat', methods=['POST', 'OPTIONS'])
+@login_required
+def german_teacher_chat():
+    """Chat with German teacher AI"""
+    if request.method == 'OPTIONS':
+        return '', 204
+    
+    try:
+        data = request.json
+        user_message = data.get('message', '')
+        chat_history = data.get('history', [])
+        
+        if not user_message:
+            return jsonify({"error": "Message required"}), 400
+        
+        def generate():
+            try:
+                # Build conversation history
+                messages = [
+                    {
+                        "role": "system", 
+                        "content": """You are an experienced and friendly German language teacher. Your role is to:
+
+1. Answer ONLY questions related to German language learning (grammar, vocabulary, pronunciation, culture, idioms, etc.)
+2. If asked about non-German topics, politely redirect: "I'm here specifically to help with German language learning. Could you ask me about German grammar, vocabulary, or culture instead?"
+3. Provide clear, educational explanations with examples
+4. Use a friendly, encouraging tone
+5. Include German words/phrases in your responses when relevant (with translations)
+6. Correct mistakes gently and explain why
+7. Provide memory tricks and learning tips when helpful
+
+Keep responses concise but thorough. Use formatting like **bold** for emphasis and `code` for German terms."""
+                    }
+                ]
+                
+                # Add recent chat history for context (last 10 messages)
+                for msg in chat_history[-10:]:
+                    messages.append({
+                        "role": msg['role'],
+                        "content": msg['content']
+                    })
+                
+                # Add current user message
+                messages.append({
+                    "role": "user",
+                    "content": user_message
+                })
+                
+                # Stream the response
+                response = openai.ChatCompletion.create(
+                    model="gpt-4o-mini",
+                    messages=messages,
+                    stream=True,
+                    temperature=0.7,
+                    max_tokens=800
+                )
+                
+                for chunk in response:
+                    if chunk.choices[0].delta.get('content'):
+                        content = chunk.choices[0].delta.content
+                        yield f"data: {json.dumps({'content': content})}\n\n"
+                
+                yield "data: [DONE]\n\n"
+                
+            except Exception as e:
+                error_msg = f"Error in chat: {str(e)}"
+                yield f"data: {json.dumps({'error': error_msg})}\n\n"
+        
+        return Response(
+            stream_with_context(generate()),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error in german_teacher_chat: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"\n{'='*50}")
@@ -1391,6 +1477,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
