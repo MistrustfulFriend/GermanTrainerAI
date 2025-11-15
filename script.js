@@ -775,10 +775,14 @@ async function submitAnswer() {
                     try {
                         const parsed = JSON.parse(data);
                         
-                        // Handle OpenAI streaming format
-                        if (parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content) {
-                            const content = parsed.choices[0].delta.content;
-                            fullText += content;
+                        // Handle error in stream
+                        if (parsed.error) {
+                            throw new Error(parsed.error);
+                        }
+                        
+                        // Handle content
+                        if (parsed.content) {
+                            fullText += parsed.content;
                             
                             // Update feedback div with accumulated text
                             feedbackDiv.innerHTML = formatStreamingText(fullText);
@@ -787,6 +791,7 @@ async function submitAnswer() {
                             feedbackDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
                     } catch (parseError) {
+                        console.error('Parse error:', parseError);
                         // If it's plain text (not JSON), just append it
                         if (data.trim()) {
                             fullText += data;
@@ -1577,6 +1582,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
