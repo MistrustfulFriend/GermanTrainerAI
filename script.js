@@ -874,6 +874,26 @@ function renderDictionary(search = '', typeFilter = '', categoryFilter = '') {
     `}).join('');
 }
 
+function toggleWordDetails(wordId) {
+    const wordElement = document.querySelector(`[data-word-id="${wordId}"]`);
+    if (!wordElement) return;
+    
+    const detailsElement = wordElement.querySelector('.word-details-collapsible');
+    const expandBtn = wordElement.querySelector('.word-expand-btn i');
+    
+    if (!detailsElement) return;
+    
+    wordElement.classList.toggle('expanded');
+    
+    if (wordElement.classList.contains('expanded')) {
+        detailsElement.style.maxHeight = detailsElement.scrollHeight + 'px';
+        if (expandBtn) expandBtn.className = 'fas fa-chevron-up';
+    } else {
+        detailsElement.style.maxHeight = '0';
+        if (expandBtn) expandBtn.className = 'fas fa-chevron-down';
+    }
+}
+
 function showDictionaryMessage(text, type) {
     const message = document.getElementById('dictionary-message');
     message.textContent = text;
@@ -1359,4 +1379,5 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
