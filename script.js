@@ -720,10 +720,19 @@ async function submitAnswer() {
     
     showLoading(true);
     
+    // Clear previous feedback
+    const feedbackDiv = document.getElementById('exercise-feedback');
+    feedbackDiv.innerHTML = '';
+    feedbackDiv.className = 'exercise-feedback';
+    feedbackDiv.style.display = 'block';
+    
     try {
-        const response = await apiRequest(`${API_URL}/check-answer`, {
+        const response = await fetch(`${API_URL}/check-answer`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
             body: JSON.stringify({
                 question: currentExercise.question,
                 answer: answer,
@@ -731,39 +740,97 @@ async function submitAnswer() {
             })
         });
         
-        if (!response) {
-            displayFeedback({ error: 'No response from server' });
-            return;
-        }
-        
-        const result = await response.json();
-        console.log('Check answer response:', result); // Debug log
-        
         if (!response.ok) {
-            displayFeedback({ error: result.error || 'Failed to check answer' });
-        } else {
-            displayFeedback(result);
-            addLog(`Completed exercise`);
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to check answer');
         }
+        
+        // Hide loading overlay to show streaming text
+        showLoading(false);
+        
+        // Handle streaming response
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+                break;
+            }
+            
+            // Decode the chunk
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6); // Remove 'data: ' prefix
+                    
+                    if (data === '[DONE]') {
+                        continue;
+                    }
+                    
+                    try {
+                        const parsed = JSON.parse(data);
+                        
+                        // Handle OpenAI streaming format
+                        if (parsed.choices && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                            const content = parsed.choices[0].delta.content;
+                            fullText += content;
+                            
+                            // Update feedback div with accumulated text
+                            feedbackDiv.innerHTML = formatStreamingText(fullText);
+                            
+                            // Auto-scroll to bottom
+                            feedbackDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    } catch (parseError) {
+                        // If it's plain text (not JSON), just append it
+                        if (data.trim()) {
+                            fullText += data;
+                            feedbackDiv.innerHTML = formatStreamingText(fullText);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Final update after streaming is complete
+        if (fullText) {
+            feedbackDiv.innerHTML = formatStreamingText(fullText);
+            addLog(`Completed exercise`);
+        } else {
+            throw new Error('No feedback received');
+        }
+        
     } catch (error) {
         console.error('Error:', error);
-        displayFeedback({ error: `Failed to check answer: ${error.message}` });
-    } finally {
         showLoading(false);
+        displayFeedback({ error: `Failed to check answer: ${error.message}` });
     }
 }
 
+function formatStreamingText(text) {
+    // Format the streaming text for better readability
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+        .replace(/\n\n/g, '<br><br>') // Double line breaks
+        .replace(/\n/g, '<br>') // Single line breaks
+        .replace(/(\d+\.\s)/g, '<br>$1') // Number lists
+        .replace(/^(ASSESSMENT|ANALYSIS|GRAMMAR EXPLANATION|MEMORY TRICK):/gm, '<br><strong>$1:</strong>'); // Section headers
+}
+
+// Keep the original displayFeedback for non-streaming responses
 function displayFeedback(result) {
     const feedbackDiv = document.getElementById('exercise-feedback');
-    
-    console.log('displayFeedback called with:', result); // Debug log
     
     if (!feedbackDiv) {
         console.error('Feedback div not found!');
         return;
     }
     
-    // Handle both success (result.feedback) and error (result.error) cases
     const feedbackText = result.feedback || result.error || 'No feedback available';
     
     if (!feedbackText) {
@@ -774,13 +841,10 @@ function displayFeedback(result) {
         return;
     }
     
-    console.log('Displaying feedback:', feedbackText);
-    
     feedbackDiv.className = 'exercise-feedback';
     feedbackDiv.innerHTML = feedbackText.replace(/\n/g, '<br>');
-    feedbackDiv.style.display = 'block'; // Make sure it's visible
+    feedbackDiv.style.display = 'block';
     
-    // Scroll to feedback
     feedbackDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -1513,6 +1577,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
