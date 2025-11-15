@@ -34,6 +34,205 @@ let scrollAccumulator = 0; // Accumulate scroll distance
 let isTransitioning = false; // Prevent overlapping transitions
 let lastActionScroll = 0; // Track where last action happened
 
+let chatHistory = [];
+let isGenerating = false;
+
+function sendChatMessage() {
+    if (isGenerating) return;
+    
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (!message) {
+        alert('Please enter a message!');
+        return;
+    }
+    
+    // Add user message to UI
+    addChatMessage('user', message);
+    
+    // Store in history
+    chatHistory.push({
+        role: 'user',
+        content: message,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Clear input
+    input.value = '';
+    
+    // Send to backend
+    getChatResponse(message);
+}
+
+function addChatMessage(role, content, streaming = false) {
+    const messagesDiv = document.getElementById('chat-messages');
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role}`;
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = role === 'user' ? '👤' : '🎓';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    const nameDiv = document.createElement('strong');
+    nameDiv.textContent = role === 'user' ? 'You' : 'German Teacher';
+    
+    const textDiv = document.createElement('p');
+    if (streaming) {
+        textDiv.innerHTML = '<span class="message-streaming"></span>';
+        textDiv.id = 'streaming-message';
+    } else {
+        textDiv.innerHTML = formatChatMessage(content);
+    }
+    
+    contentDiv.appendChild(nameDiv);
+    contentDiv.appendChild(textDiv);
+    
+    messageDiv.appendChild(avatar);
+    messageDiv.appendChild(contentDiv);
+    
+    messagesDiv.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    return textDiv;
+}
+
+function formatChatMessage(text) {
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        .replace(/\n/g, '<br>');
+}
+
+async function getChatResponse(userMessage) {
+    isGenerating = true;
+    
+    // Add empty assistant message for streaming
+    const streamingText = addChatMessage('assistant', '', true);
+    
+    try {
+        const response = await fetch(`${API_URL}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                message: userMessage,
+                history: chatHistory.slice(-10) // Send last 10 messages for context
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to get response');
+        }
+        
+        // Handle streaming response
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    
+                    if (data === '[DONE]') continue;
+                    
+                    try {
+                        const parsed = JSON.parse(data);
+                        
+                        if (parsed.error) {
+                            throw new Error(parsed.error);
+                        }
+                        
+                        if (parsed.content) {
+                            fullText += parsed.content;
+                            streamingText.innerHTML = formatChatMessage(fullText);
+                            
+                            // Auto-scroll
+                            const messagesDiv = document.getElementById('chat-messages');
+                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                        }
+                    } catch (parseError) {
+                        console.error('Parse error:', parseError);
+                    }
+                }
+            }
+        }
+        
+        // Store assistant response in history
+        chatHistory.push({
+            role: 'assistant',
+            content: fullText,
+            timestamp: new Date().toISOString()
+        });
+        
+        addLog('Teacher chat message');
+        
+    } catch (error) {
+        console.error('Chat error:', error);
+        streamingText.innerHTML = `<em>Sorry, I encountered an error: ${error.message}</em>`;
+    } finally {
+        isGenerating = false;
+    }
+}
+
+function clearChat() {
+    if (confirm('Clear entire chat history?')) {
+        chatHistory = [];
+        const messagesDiv = document.getElementById('chat-messages');
+        messagesDiv.innerHTML = `
+            <div class="chat-message assistant">
+                <div class="message-avatar">🎓</div>
+                <div class="message-content">
+                    <strong>German Teacher</strong>
+                    <p>Hallo! I'm your German language teacher. Ask me anything about German - grammar rules, vocabulary, pronunciation, culture, or practice conversations. How can I help you today?</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function exportChat() {
+    if (chatHistory.length === 0) {
+        alert('No chat history to export!');
+        return;
+    }
+    
+    let exportText = 'German Teacher Chat Export\n';
+    exportText += '='.repeat(50) + '\n\n';
+    
+    chatHistory.forEach(msg => {
+        const role = msg.role === 'user' ? 'You' : 'German Teacher';
+        const time = new Date(msg.timestamp).toLocaleString();
+        exportText += `[${time}] ${role}:\n${msg.content}\n\n`;
+    });
+    
+    const blob = new Blob([exportText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `german-teacher-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+
+
+
+
 // Initialize header scroll behavior
 function initializeHeaderCollapse() {
     const header = document.querySelector('header');
@@ -158,6 +357,17 @@ function expandHeader() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+    }
+});
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -1582,6 +1792,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
