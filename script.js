@@ -29,26 +29,14 @@ let quizAnswered = false;
 // State management for scroll
 let lastScrollTop = 0;
 let headerCollapsed = false;
-let scrollTimeout = null;
-let isScrolling = false;
+let scrollDirection = null; // 'up' or 'down'
+let scrollAccumulator = 0; // Accumulate scroll distance
 
 // Initialize header scroll behavior
 function initializeHeaderCollapse() {
     const header = document.querySelector('header');
     
     window.addEventListener('scroll', function() {
-        // Clear the timeout throughout the scroll
-        clearTimeout(scrollTimeout);
-        
-        if (!isScrolling) {
-            isScrolling = true;
-        }
-        
-        // Set a timeout to run after scrolling ends
-        scrollTimeout = setTimeout(function() {
-            isScrolling = false;
-        }, 150);
-        
         handleHeaderScroll();
     }, { passive: true });
     
@@ -57,13 +45,13 @@ function initializeHeaderCollapse() {
         btn.addEventListener('click', function() {
             if (headerCollapsed) {
                 expandHeader();
+                scrollAccumulator = 0;
             }
         });
     });
 }
 
 function handleHeaderScroll() {
-    const header = document.querySelector('header');
     const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
     
     // Prevent negative scrolling issues
@@ -71,42 +59,48 @@ function handleHeaderScroll() {
         return;
     }
     
-    // Don't collapse if at top of page
+    // Always expand at top of page
     if (currentScroll <= 100) {
         if (headerCollapsed) {
             expandHeader();
+            scrollAccumulator = 0;
+            scrollDirection = null;
         }
-        lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+        lastScrollTop = currentScroll;
         return;
     }
     
     // Calculate scroll difference
     const scrollDifference = currentScroll - lastScrollTop;
     
-    // Increased threshold to prevent sensitivity
-    // Only trigger if scrolled more than 10 pixels in one direction
-    if (Math.abs(scrollDifference) < 10) {
+    // Ignore very small movements (noise/jitter)
+    if (Math.abs(scrollDifference) < 2) {
         return;
     }
     
-    // Check if we're near the bottom (within 100px)
-    const documentHeight = document.documentElement.scrollHeight;
-    const windowHeight = window.innerHeight;
-    const scrolledToBottom = (currentScroll + windowHeight) >= (documentHeight - 100);
+    // Determine current scroll direction
+    const currentDirection = scrollDifference > 0 ? 'down' : 'up';
     
-    // Don't toggle at the bottom of the page
-    if (scrolledToBottom) {
-        lastScrollTop = currentScroll;
-        return;
+    // If direction changed, reset accumulator
+    if (scrollDirection !== currentDirection) {
+        scrollDirection = currentDirection;
+        scrollAccumulator = 0;
     }
     
-    // Scrolling down - collapse
-    if (scrollDifference > 0 && !headerCollapsed) {
-        collapseHeader();
-    } 
-    // Scrolling up - expand
-    else if (scrollDifference < 0 && headerCollapsed) {
-        expandHeader();
+    // Accumulate scroll distance in current direction
+    scrollAccumulator += Math.abs(scrollDifference);
+    
+    // Only trigger collapse/expand after scrolling 80px continuously in one direction
+    const SCROLL_THRESHOLD = 80;
+    
+    if (scrollAccumulator >= SCROLL_THRESHOLD) {
+        if (scrollDirection === 'down' && !headerCollapsed) {
+            collapseHeader();
+            scrollAccumulator = 0; // Reset after action
+        } else if (scrollDirection === 'up' && headerCollapsed) {
+            expandHeader();
+            scrollAccumulator = 0; // Reset after action
+        }
     }
     
     lastScrollTop = currentScroll;
@@ -114,15 +108,21 @@ function handleHeaderScroll() {
 
 function collapseHeader() {
     const header = document.querySelector('header');
-    header.classList.add('collapsed');
-    headerCollapsed = true;
+    if (!header.classList.contains('collapsed')) {
+        header.classList.add('collapsed');
+        headerCollapsed = true;
+    }
 }
 
 function expandHeader() {
     const header = document.querySelector('header');
-    header.classList.remove('collapsed');
-    headerCollapsed = false;
+    if (header.classList.contains('collapsed')) {
+        header.classList.remove('collapsed');
+        headerCollapsed = false;
+    }
 }
+
+
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -1478,6 +1478,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
