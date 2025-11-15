@@ -4,7 +4,7 @@ import openai
 import os
 from datetime import datetime, timedelta
 import random
-from dotenv import load_dotenva
+from dotenv import load_dotenv
 from pymongo import MongoClient
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1406,6 +1406,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
