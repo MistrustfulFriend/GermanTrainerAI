@@ -67,6 +67,14 @@ function handleHeaderScroll() {
         return;
     }
     
+    // Add threshold to prevent glitching on small scroll movements
+    const scrollDifference = Math.abs(currentScroll - lastScrollTop);
+    
+    // Only trigger if scrolled more than 5 pixels
+    if (scrollDifference < 5) {
+        return;
+    }
+    
     // Scrolling down - collapse
     if (currentScroll > lastScrollTop && !headerCollapsed) {
         collapseHeader();
@@ -1446,6 +1454,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
