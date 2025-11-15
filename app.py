@@ -4,7 +4,7 @@ import openai
 import os
 from datetime import datetime, timedelta
 import random
-from dotenv import load_dotenv
+from dotenv import load_dotenva
 from pymongo import MongoClient
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -583,12 +583,12 @@ IMPORTANT:
 
 # Split into separate functions for each exercise type
 
-def check_translation_answer(question, answer):
-    """Check translation exercise answers"""
-    if not openai.api_key:
-        return "Error: OpenAI API key not configured."
+def get_checker_prompt_and_system(exercise_type, question, answer):
+    """Extract prompt and system message for each exercise type"""
     
-    prompt = f"""Evaluate this German translation exercise.
+    if exercise_type == 'translation':
+        system_msg = "You are a German language teacher providing structured, helpful feedback."
+        prompt = f"""Evaluate this German translation exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWER: {answer}
@@ -609,25 +609,9 @@ Provide feedback in English with this structure:
 
 Be encouraging but honest. Focus on learning, not just praise."""
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",
-            messages=[
-                {"role": "system", "content": "You are a German language teacher providing structured, helpful feedback."},
-                {"role": "user", "content": prompt}
-            ],
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error checking translation: {str(e)}"
-
-
-def check_conversation_answer(question, answer):
-    """Check conversation exercise answers"""
-    if not openai.api_key:
-        return "Error: OpenAI API key not configured."
-    
-    prompt = f"""Evaluate this German conversation response.
+    elif exercise_type == 'conversation':
+        system_msg = "You are a German conversation coach providing practical feedback."
+        prompt = f"""Evaluate this German conversation response.
 
 SCENARIO: {question}
 STUDENT'S RESPONSE: {answer}
@@ -649,25 +633,9 @@ Provide feedback in English with this structure:
 
 Be constructive and supportive."""
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",
-            messages=[
-                {"role": "system", "content": "You are a German conversation coach providing practical feedback."},
-                {"role": "user", "content": prompt}
-            ],
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error checking conversation: {str(e)}"
-
-
-def check_grammar_answer(question, answer):
-    """Check grammar exercise answers"""
-    if not openai.api_key:
-        return "Error: OpenAI API key not configured."
-    
-    prompt = f"""Evaluate this German grammar exercise.
+    elif exercise_type == 'grammar':
+        system_msg = "You are a German grammar expert providing clear explanations."
+        prompt = f"""Evaluate this German grammar exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWER: {answer}
@@ -688,26 +656,9 @@ Provide feedback in English with this structure:
 
 Be clear and educational."""
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",
-            messages=[
-                {"role": "system", "content": "You are a German grammar expert providing clear explanations."},
-                {"role": "user", "content": prompt}
-            ],
-        stream=True
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error checking grammar: {str(e)}"
-
-
-def check_vocabulary_answer(question, answer):
-    """Check vocabulary exercise answers"""
-    if not openai.api_key:
-        return "Error: OpenAI API key not configured."
-    
-    prompt = f"""Evaluate this German vocabulary exercise.
+    elif exercise_type == 'vocabulary':
+        system_msg = "You are a German vocabulary teacher making learning engaging."
+        prompt = f"""Evaluate this German vocabulary exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWERS: {answer}
@@ -727,25 +678,9 @@ Provide feedback in English with this structure:
 
 Be encouraging and informative."""
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",
-            messages=[
-                {"role": "system", "content": "You are a German vocabulary teacher making learning engaging."},
-                {"role": "user", "content": prompt}
-            ],
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error checking vocabulary: {str(e)}"
-
-
-def check_listening_answer(question, answer):
-    """Check listening comprehension answers"""
-    if not openai.api_key:
-        return "Error: OpenAI API key not configured."
-    
-    prompt = f"""Evaluate answers to this German listening comprehension exercise.
+    elif exercise_type == 'listening_practice':
+        system_msg = "You are a German listening comprehension instructor."
+        prompt = f"""Evaluate answers to this German listening comprehension exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWERS: {answer}
@@ -769,25 +704,9 @@ Provide feedback in English with this structure:
 
 Be encouraging and focus on comprehension strategies."""
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",
-            messages=[
-                {"role": "system", "content": "You are a German listening comprehension instructor."},
-                {"role": "user", "content": prompt}
-            ],
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error checking listening: {str(e)}"
-
-
-def check_creative_writing_answer(question, answer):
-    """Check creative writing answers"""
-    if not openai.api_key:
-        return "Error: OpenAI API key not configured."
-    
-    prompt = f"""Evaluate this German creative writing exercise.
+    elif exercise_type == 'creative_writing':
+        system_msg = "You are a creative writing instructor for German learners."
+        prompt = f"""Evaluate this German creative writing exercise.
 
 EXERCISE: {question}
 STUDENT'S WRITING: {answer}
@@ -816,25 +735,9 @@ Provide feedback in English with this structure:
 
 Be supportive and constructive. Focus on both content and language."""
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",
-            messages=[
-                {"role": "system", "content": "You are a creative writing instructor for German learners."},
-                {"role": "user", "content": prompt}
-            ],
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error checking creative writing: {str(e)}"
-
-
-def check_error_correction_answer(question, answer):
-    """Check error correction exercise answers"""
-    if not openai.api_key:
-        return "Error: OpenAI API key not configured."
-    
-    prompt = f"""Evaluate this German error correction exercise.
+    elif exercise_type == 'error_correction':
+        system_msg = "You are a German error correction specialist helping students learn."
+        prompt = f"""Evaluate this German error correction exercise.
 
 ORIGINAL EXERCISE: {question}
 STUDENT'S CORRECTIONS: {answer}
@@ -859,25 +762,9 @@ Provide feedback in English with this structure:
 
 Be clear and educational. Help them understand WHY errors occur."""
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",
-            messages=[
-                {"role": "system", "content": "You are a German error correction specialist helping students learn."},
-                {"role": "user", "content": prompt}
-            ],
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error checking error correction: {str(e)}"
-
-
-def check_dictionary_practice_answer(question, answer):
-    """Check dictionary practice answers"""
-    if not openai.api_key:
-        return "Error: OpenAI API key not configured."
-    
-    prompt = f"""Evaluate this German dictionary practice exercise.
+    elif exercise_type == 'dictionary_practice':
+        system_msg = "You are a German vocabulary practice instructor."
+        prompt = f"""Evaluate this German dictionary practice exercise.
 
 EXERCISE: {question}
 STUDENT'S ANSWER: {answer}
@@ -900,17 +787,17 @@ Provide feedback in English with this structure:
 
 Be supportive and help reinforce their vocabulary."""
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-5-nano-2025-08-07",
-            messages=[
-                {"role": "system", "content": "You are a German vocabulary practice instructor."},
-                {"role": "user", "content": prompt}
-            ],
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"Error checking dictionary practice: {str(e)}"
+    else:
+        # Default to translation
+        system_msg = "You are a German language teacher providing structured, helpful feedback."
+        prompt = f"""Evaluate this German exercise.
+
+EXERCISE: {question}
+STUDENT'S ANSWER: {answer}
+
+Provide helpful, structured feedback in English."""
+
+    return prompt, system_msg
 
 
 # Main dispatcher function - REPLACE the old check_answer()
@@ -1416,15 +1303,61 @@ def check_answer_route():
         if not question or not answer:
             return jsonify({"error": "Question and answer required"}), 400
         
-        feedback = check_answer(question, answer, exercise_type)
+        # Streaming generator
+        def generate():
+            try:
+                # Call the appropriate checking function based on exercise_type
+                # These functions already have the right prompts!
+                checkers = {
+                    'translation': check_translation_answer,
+                    'conversation': check_conversation_answer,
+                    'grammar': check_grammar_answer,
+                    'vocabulary': check_vocabulary_answer,
+                    'listening_practice': check_listening_answer,
+                    'creative_writing': check_creative_writing_answer,
+                    'error_correction': check_error_correction_answer,
+                    'dictionary_practice': check_dictionary_practice_answer
+                }
+                
+                checker_function = checkers.get(exercise_type, check_translation_answer)
+                
+                # Get the prompt and system message from the checker function
+                prompt, system_msg = get_checker_prompt_and_system(exercise_type, question, answer)
+                
+                # Stream the response
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": system_msg},
+                        {"role": "user", "content": prompt}
+                    ],
+                    stream=True
+                )
+                
+                for chunk in response:
+                    if chunk.choices[0].delta.get('content'):
+                        content = chunk.choices[0].delta.content
+                        yield f"data: {json.dumps({'content': content})}\n\n"
+                
+                yield "data: [DONE]\n\n"
+                
+            except Exception as e:
+                error_msg = f"Error checking answer: {str(e)}"
+                yield f"data: {json.dumps({'error': error_msg})}\n\n"
         
-        return jsonify({
-            "feedback": feedback,
-            "timestamp": datetime.now().isoformat()
-        })
+        return Response(
+            stream_with_context(generate()),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+        
     except Exception as e:
-        print(f"Error checking answer: {e}")
+        print(f"Error in check_answer_route: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/analyze-word', methods=['POST', 'OPTIONS'])
 @login_required
@@ -1473,6 +1406,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
