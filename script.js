@@ -31,13 +31,17 @@ let lastScrollTop = 0;
 let headerCollapsed = false;
 let scrollDirection = null; // 'up' or 'down'
 let scrollAccumulator = 0; // Accumulate scroll distance
+let isTransitioning = false; // Prevent overlapping transitions
+let lastActionScroll = 0; // Track where last action happened
 
 // Initialize header scroll behavior
 function initializeHeaderCollapse() {
     const header = document.querySelector('header');
     
     window.addEventListener('scroll', function() {
-        handleHeaderScroll();
+        if (!isTransitioning) {
+            handleHeaderScroll();
+        }
     }, { passive: true });
     
     // Expand header when navigation button is clicked
@@ -46,18 +50,14 @@ function initializeHeaderCollapse() {
             if (headerCollapsed) {
                 expandHeader();
                 scrollAccumulator = 0;
+                scrollDirection = null;
             }
         });
     });
 }
 
 function handleHeaderScroll() {
-    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-    
-    // Prevent negative scrolling issues
-    if (currentScroll < 0) {
-        return;
-    }
+    const currentScroll = Math.max(0, window.pageYOffset || document.documentElement.scrollTop);
     
     // Always expand at top of page
     if (currentScroll <= 100) {
@@ -65,7 +65,19 @@ function handleHeaderScroll() {
             expandHeader();
             scrollAccumulator = 0;
             scrollDirection = null;
+            lastActionScroll = currentScroll;
         }
+        lastScrollTop = currentScroll;
+        return;
+    }
+    
+    // Check if we're at or near the bottom
+    const documentHeight = document.documentElement.scrollHeight;
+    const windowHeight = window.innerHeight;
+    const distanceFromBottom = documentHeight - (currentScroll + windowHeight);
+    
+    // Lock header state when near bottom (within 50px)
+    if (distanceFromBottom <= 50) {
         lastScrollTop = currentScroll;
         return;
     }
@@ -74,7 +86,15 @@ function handleHeaderScroll() {
     const scrollDifference = currentScroll - lastScrollTop;
     
     // Ignore very small movements (noise/jitter)
-    if (Math.abs(scrollDifference) < 2) {
+    if (Math.abs(scrollDifference) < 3) {
+        lastScrollTop = currentScroll;
+        return;
+    }
+    
+    // Prevent actions too close to last action (cooldown period)
+    const distanceFromLastAction = Math.abs(currentScroll - lastActionScroll);
+    if (distanceFromLastAction < 150) {
+        lastScrollTop = currentScroll;
         return;
     }
     
@@ -90,16 +110,20 @@ function handleHeaderScroll() {
     // Accumulate scroll distance in current direction
     scrollAccumulator += Math.abs(scrollDifference);
     
-    // Only trigger collapse/expand after scrolling 80px continuously in one direction
-    const SCROLL_THRESHOLD = 80;
+    // Require 120px continuous scroll to trigger action
+    const SCROLL_THRESHOLD = 120;
     
     if (scrollAccumulator >= SCROLL_THRESHOLD) {
         if (scrollDirection === 'down' && !headerCollapsed) {
             collapseHeader();
-            scrollAccumulator = 0; // Reset after action
+            scrollAccumulator = 0;
+            scrollDirection = null;
+            lastActionScroll = currentScroll;
         } else if (scrollDirection === 'up' && headerCollapsed) {
             expandHeader();
-            scrollAccumulator = 0; // Reset after action
+            scrollAccumulator = 0;
+            scrollDirection = null;
+            lastActionScroll = currentScroll;
         }
     }
     
@@ -108,20 +132,31 @@ function handleHeaderScroll() {
 
 function collapseHeader() {
     const header = document.querySelector('header');
-    if (!header.classList.contains('collapsed')) {
+    if (!header.classList.contains('collapsed') && !isTransitioning) {
+        isTransitioning = true;
         header.classList.add('collapsed');
         headerCollapsed = true;
+        
+        // Release transition lock after animation completes
+        setTimeout(() => {
+            isTransitioning = false;
+        }, 400); // Match CSS transition duration
     }
 }
 
 function expandHeader() {
     const header = document.querySelector('header');
-    if (header.classList.contains('collapsed')) {
+    if (header.classList.contains('collapsed') && !isTransitioning) {
+        isTransitioning = true;
         header.classList.remove('collapsed');
         headerCollapsed = false;
+        
+        // Release transition lock after animation completes
+        setTimeout(() => {
+            isTransitioning = false;
+        }, 400); // Match CSS transition duration
     }
 }
-
 
 
 // Initialize app
@@ -1478,6 +1513,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
