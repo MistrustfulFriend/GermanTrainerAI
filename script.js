@@ -26,23 +26,31 @@ let practiceDirection = 'german-to-target'; // or 'target-to-german'
 let quizScore = { correct: 0, total: 0 };
 let quizAnswered = false;
 
+// State management for scroll
 let lastScrollTop = 0;
 let headerCollapsed = false;
+let scrollTimeout = null;
+let isScrolling = false;
 
 // Initialize header scroll behavior
 function initializeHeaderCollapse() {
     const header = document.querySelector('header');
-    let ticking = false;
     
     window.addEventListener('scroll', function() {
-        if (!ticking) {
-            window.requestAnimationFrame(function() {
-                handleHeaderScroll();
-                ticking = false;
-            });
-            ticking = true;
+        // Clear the timeout throughout the scroll
+        clearTimeout(scrollTimeout);
+        
+        if (!isScrolling) {
+            isScrolling = true;
         }
-    });
+        
+        // Set a timeout to run after scrolling ends
+        scrollTimeout = setTimeout(function() {
+            isScrolling = false;
+        }, 150);
+        
+        handleHeaderScroll();
+    }, { passive: true });
     
     // Expand header when navigation button is clicked
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -58,29 +66,46 @@ function handleHeaderScroll() {
     const header = document.querySelector('header');
     const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
     
+    // Prevent negative scrolling issues
+    if (currentScroll < 0) {
+        return;
+    }
+    
     // Don't collapse if at top of page
     if (currentScroll <= 100) {
         if (headerCollapsed) {
             expandHeader();
         }
+        lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+        return;
+    }
+    
+    // Calculate scroll difference
+    const scrollDifference = currentScroll - lastScrollTop;
+    
+    // Increased threshold to prevent sensitivity
+    // Only trigger if scrolled more than 10 pixels in one direction
+    if (Math.abs(scrollDifference) < 10) {
+        return;
+    }
+    
+    // Check if we're near the bottom (within 100px)
+    const documentHeight = document.documentElement.scrollHeight;
+    const windowHeight = window.innerHeight;
+    const scrolledToBottom = (currentScroll + windowHeight) >= (documentHeight - 100);
+    
+    // Don't toggle at the bottom of the page
+    if (scrolledToBottom) {
         lastScrollTop = currentScroll;
         return;
     }
     
-    // Add threshold to prevent glitching on small scroll movements
-    const scrollDifference = Math.abs(currentScroll - lastScrollTop);
-    
-    // Only trigger if scrolled more than 5 pixels
-    if (scrollDifference < 5) {
-        return;
-    }
-    
     // Scrolling down - collapse
-    if (currentScroll > lastScrollTop && !headerCollapsed) {
+    if (scrollDifference > 0 && !headerCollapsed) {
         collapseHeader();
     } 
     // Scrolling up - expand
-    else if (currentScroll < lastScrollTop && headerCollapsed) {
+    else if (scrollDifference < 0 && headerCollapsed) {
         expandHeader();
     }
     
@@ -98,7 +123,6 @@ function expandHeader() {
     header.classList.remove('collapsed');
     headerCollapsed = false;
 }
-
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -1454,6 +1478,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
