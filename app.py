@@ -751,7 +751,7 @@ Provide feedback in English with this structure:
 
 Be clear and educational. Help them understand WHY errors occur."""
     }
-    
+        
     try:
         response = openai.ChatCompletion.create(
             model="gpt-5-mini",
@@ -762,14 +762,12 @@ Be clear and educational. Help them understand WHY errors occur."""
                 },
                 {"role": "user", "content": prompts.get(exercise_type, prompts['translation'])}
             ],
-            max_completion_tokens=450
+            max_tokens=450
         )
-        
-        return response.choices[0].message.content.strip()
-        
+        feedback = response['choices'][0]['message']['content']
     except Exception as e:
-        print(f"Error checking answer: {e}")
-        return f"Error checking answer: {str(e)}"
+        print("Error:", e)
+
 
 
 def analyze_word(word, context):
@@ -1313,6 +1311,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
