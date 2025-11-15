@@ -611,13 +611,12 @@ Be encouraging but honest. Focus on learning, not just praise."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano-2025-08-07",
             messages=[
                 {"role": "system", "content": "You are a German language teacher providing structured, helpful feedback."},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=1000,
-            temperature=0.7
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -653,13 +652,12 @@ Be constructive and supportive."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano-2025-08-07",
             messages=[
                 {"role": "system", "content": "You are a German conversation coach providing practical feedback."},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=1200,
-            temperature=0.7
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -694,13 +692,12 @@ Be clear and educational."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano-2025-08-07",
             messages=[
                 {"role": "system", "content": "You are a German grammar expert providing clear explanations."},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=1000,
-            temperature=0.6
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -734,13 +731,12 @@ Be encouraging and informative."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano-2025-08-07",
             messages=[
                 {"role": "system", "content": "You are a German vocabulary teacher making learning engaging."},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=900,
-            temperature=0.7
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -778,13 +774,12 @@ Be encouraging and focus on comprehension strategies."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano-2025-08-07",
             messages=[
                 {"role": "system", "content": "You are a German listening comprehension instructor."},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=1100,
-            temperature=0.7
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -827,13 +822,12 @@ Be supportive and constructive. Focus on both content and language."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano-2025-08-07",
             messages=[
                 {"role": "system", "content": "You are a creative writing instructor for German learners."},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=1400,
-            temperature=0.7
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -872,13 +866,12 @@ Be clear and educational. Help them understand WHY errors occur."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano-2025-08-07",
             messages=[
                 {"role": "system", "content": "You are a German error correction specialist helping students learn."},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=1300,
-            temperature=0.6
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -915,13 +908,12 @@ Be supportive and help reinforce their vocabulary."""
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano-2025-08-07",
             messages=[
                 {"role": "system", "content": "You are a German vocabulary practice instructor."},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=1100,
-            temperature=0.7
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -1488,6 +1480,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
