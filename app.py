@@ -1312,7 +1312,7 @@ def check_answer_route():
                 
                 # Stream the response
                 response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-5-mini-2025-08-07",
                     messages=[
                         {"role": "system", "content": system_msg},
                         {"role": "user", "content": prompt}
@@ -1391,6 +1391,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
