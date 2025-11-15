@@ -751,21 +751,26 @@ Provide feedback in English with this structure:
 
 Be clear and educational. Help them understand WHY errors occur."""
     }
-        
+    
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-5-mini",
+            model="gpt-5-mini",  # Keep your model name
             messages=[
                 {
                     "role": "system", 
                     "content": "You are a German language teacher providing structured, helpful feedback. Follow the format exactly. Be supportive but accurate—don't say something is correct if it isn't. Provide clear explanations that help students understand and improve."
                 },
                 {"role": "user", "content": prompts.get(exercise_type, prompts['translation'])}
-            ]
+            ],
+            max_tokens=450,
+            temperature=0.7
         )
-        feedback = response['choices'][0]['message']['content']
+        
+        return response.choices[0].message.content.strip()
+        
     except Exception as e:
-        print("Error:", e)
+        print(f"Error checking answer: {e}")
+        return f"Error checking answer: {str(e)}"  # ✅ THIS IS THE KEY FIX
 
 
 
@@ -1310,6 +1315,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
