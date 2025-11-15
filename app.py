@@ -695,6 +695,7 @@ Be clear and educational."""
                 {"role": "system", "content": "You are a German grammar expert providing clear explanations."},
                 {"role": "user", "content": prompt}
             ],
+        stream=True
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -1472,6 +1473,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
