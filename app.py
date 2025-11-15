@@ -754,7 +754,7 @@ Be clear and educational. Help them understand WHY errors occur."""
     
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-0125",  # Keep your model name
+            model="gpt-5-nano-2025-08-07",  # Keep your model name
             messages=[
                 {
                     "role": "system", 
@@ -762,7 +762,7 @@ Be clear and educational. Help them understand WHY errors occur."""
                 },
                 {"role": "user", "content": prompts.get(exercise_type, prompts['translation'])}
             ],
-            max_tokens=3000
+            max_completion_tokens=3000
         )
         
         return response.choices[0].message.content.strip()
@@ -1314,9 +1314,6 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
-
-
-
 
 
 
