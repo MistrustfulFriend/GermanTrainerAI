@@ -616,7 +616,7 @@ Be encouraging but honest. Focus on learning, not just praise."""
                 {"role": "system", "content": "You are a German language teacher providing structured, helpful feedback."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=1000,
+            max_tokens=1000,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -657,7 +657,7 @@ Be constructive and supportive."""
                 {"role": "system", "content": "You are a German conversation coach providing practical feedback."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=1200,
+            max_tokens=1200,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -697,7 +697,7 @@ Be clear and educational."""
                 {"role": "system", "content": "You are a German grammar expert providing clear explanations."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=1000,
+            max_tokens=1000,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -736,7 +736,7 @@ Be encouraging and informative."""
                 {"role": "system", "content": "You are a German vocabulary teacher making learning engaging."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=900,
+            max_tokens=900,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -779,7 +779,7 @@ Be encouraging and focus on comprehension strategies."""
                 {"role": "system", "content": "You are a German listening comprehension instructor."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=1100,
+            max_tokens=1100,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -827,7 +827,7 @@ Be supportive and constructive. Focus on both content and language."""
                 {"role": "system", "content": "You are a creative writing instructor for German learners."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=1400,
+            max_tokens=1400,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -871,7 +871,7 @@ Be clear and educational. Help them understand WHY errors occur."""
                 {"role": "system", "content": "You are a German error correction specialist helping students learn."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=1300,
+            max_tokens=1300,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -913,7 +913,7 @@ Be supportive and help reinforce their vocabulary."""
                 {"role": "system", "content": "You are a German vocabulary practice instructor."},
                 {"role": "user", "content": prompt}
             ],
-            max_completion_tokens=1100,
+            max_tokens=1100,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -1480,6 +1480,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
