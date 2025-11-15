@@ -26,6 +26,72 @@ let practiceDirection = 'german-to-target'; // or 'target-to-german'
 let quizScore = { correct: 0, total: 0 };
 let quizAnswered = false;
 
+let lastScrollTop = 0;
+let headerCollapsed = false;
+
+// Initialize header scroll behavior
+function initializeHeaderCollapse() {
+    const header = document.querySelector('header');
+    let ticking = false;
+    
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            window.requestAnimationFrame(function() {
+                handleHeaderScroll();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+    
+    // Expand header when navigation button is clicked
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (headerCollapsed) {
+                expandHeader();
+            }
+        });
+    });
+}
+
+function handleHeaderScroll() {
+    const header = document.querySelector('header');
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Don't collapse if at top of page
+    if (currentScroll <= 100) {
+        if (headerCollapsed) {
+            expandHeader();
+        }
+        lastScrollTop = currentScroll;
+        return;
+    }
+    
+    // Scrolling down - collapse
+    if (currentScroll > lastScrollTop && !headerCollapsed) {
+        collapseHeader();
+    } 
+    // Scrolling up - expand
+    else if (currentScroll < lastScrollTop && headerCollapsed) {
+        expandHeader();
+    }
+    
+    lastScrollTop = currentScroll;
+}
+
+function collapseHeader() {
+    const header = document.querySelector('header');
+    header.classList.add('collapsed');
+    headerCollapsed = true;
+}
+
+function expandHeader() {
+    const header = document.querySelector('header');
+    header.classList.remove('collapsed');
+    headerCollapsed = false;
+}
+
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     console.log('App initialized - MongoDB version with Auth');
@@ -58,6 +124,7 @@ function initializeApp() {
     updateUI();
     testBackendConnection();
     updateUserInfo();
+    initializeHeaderCollapse();
 }
 
 function updateUserInfo() {
@@ -1379,5 +1446,6 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
