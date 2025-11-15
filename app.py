@@ -754,7 +754,7 @@ Be clear and educational. Help them understand WHY errors occur."""
     
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5",  # Keep your model name
+            model="gpt-3.5-turbo-0125",  # Keep your model name
             messages=[
                 {
                     "role": "system", 
@@ -1314,6 +1314,7 @@ if __name__ == '__main__':
     print(f"{'='*50}\n")
 
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 
