@@ -104,10 +104,30 @@ function addChatMessage(role, content, streaming = false) {
 }
 
 function formatChatMessage(text) {
-    return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/`(.*?)`/g, '<code>$1</code>')
-        .replace(/\n/g, '<br>');
+    // First, normalize line breaks (convert \r\n to \n)
+    text = text.replace(/\r\n/g, '\n');
+    
+    // Format markdown-style elements
+    // Bold text: **text** -> <strong>text</strong>
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Inline code: `text` -> <code>text</code>
+    text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+    
+    // Convert double line breaks to paragraph breaks
+    text = text.replace(/\n\n+/g, '</p><p>');
+    
+    // Convert single line breaks to <br> only within paragraphs
+    text = text.replace(/\n/g, '<br>');
+    
+    // Wrap in paragraph tags
+    text = '<p>' + text + '</p>';
+    
+    // Clean up any empty paragraphs
+    text = text.replace(/<p><\/p>/g, '');
+    text = text.replace(/<p>\s*<\/p>/g, '');
+    
+    return text;
 }
 
 async function getChatResponse(userMessage) {
@@ -1792,6 +1812,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
