@@ -37,6 +37,12 @@ let lastActionScroll = 0; // Track where last action happened
 let chatHistory = [];
 let isGenerating = false;
 
+let dictionaryFilters = {
+    search: '',
+    type: '',
+    category: ''
+};
+
 function sendChatMessage() {
     if (isGenerating) return;
     
@@ -581,13 +587,17 @@ function switchView(viewName) {
     document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
     
     if (viewName === 'dictionary') {
-        renderDictionary();
+        // Restore filter values from state
+        document.getElementById('search-dictionary').value = dictionaryFilters.search;
+        document.getElementById('filter-type').value = dictionaryFilters.type;
+        document.getElementById('filter-category').value = dictionaryFilters.category;
+        // Render with preserved filters
+        renderDictionary(dictionaryFilters.search, dictionaryFilters.type, dictionaryFilters.category);
     } else if (viewName === 'log') {
         renderLog();
     } else if (viewName === 'training') {
         checkTrainingAvailability();
     } else if (viewName === 'practice') {
-        // FIXED: Reset practice state completely when entering practice view
         exitPractice();
         checkPracticeAvailability();
     }
@@ -1084,10 +1094,17 @@ function displayFeedback(result) {
 }
 
 function openEditModal(id) {
-    const word = dictionary.find(w => w.id === id);
-    if (!word) return;
+    // Ensure id is treated as integer
+    const wordId = typeof id === 'string' ? parseInt(id) : id;
+    const word = dictionary.find(w => w.id === wordId);
     
-    document.getElementById('edit-word-id').value = word.id;
+    if (!word) {
+        console.error('Word not found with id:', id);
+        alert('Word not found!');
+        return;
+    }
+    
+    document.getElementById('edit-word-id').value = wordId;
     document.getElementById('edit-german').value = word.german;
     document.getElementById('edit-english').value = word.english;
     document.getElementById('edit-russian').value = word.russian;
@@ -1099,6 +1116,29 @@ function openEditModal(id) {
     document.getElementById('edit-word-modal').classList.add('active');
 }
 
+function debugDictionary() {
+    console.log('=== DICTIONARY DEBUG INFO ===');
+    console.log('Total words:', dictionary.length);
+    console.log('Current filters:', dictionaryFilters);
+    console.log('Selected words:', Array.from(selectedDictionaryWords));
+    console.log('Current user:', currentUser);
+    console.log('API URL:', API_URL);
+    
+    if (dictionary.length > 0) {
+        console.log('Sample word:', dictionary[0]);
+        console.log('Word ID type:', typeof dictionary[0].id);
+    }
+    
+    // Test authentication
+    fetch(`${API_URL}/api/auth/check`, { credentials: 'include' })
+        .then(r => r.json())
+        .then(data => console.log('Auth status:', data))
+        .catch(e => console.error('Auth check failed:', e));
+    
+    console.log('===========================');
+}
+
+
 function closeEditModal() {
     document.getElementById('edit-word-modal').classList.remove('active');
 }
@@ -1107,7 +1147,10 @@ async function saveEditWord() {
     const id = parseInt(document.getElementById('edit-word-id').value);
     const word = dictionary.find(w => w.id === id);
     
-    if (!word) return;
+    if (!word) {
+        alert('Word not found!');
+        return;
+    }
     
     const updatedData = {
         german: document.getElementById('edit-german').value.trim(),
@@ -1119,20 +1162,46 @@ async function saveEditWord() {
         examples: document.getElementById('edit-examples').value.trim().split('\n').filter(e => e.trim())
     };
     
-    const response = await apiRequest(`${API_URL}/api/dictionary/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData)
-    });
+    // Validate required fields
+    if (!updatedData.german || !updatedData.english || !updatedData.russian) {
+        alert('German, English, and Russian translations are required!');
+        return;
+    }
     
-    if (response && response.ok) {
+    try {
+        showLoading(true);
+        
+        const response = await apiRequest(`${API_URL}/api/dictionary/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(updatedData)
+        });
+        
+        if (!response) {
+            throw new Error('No response from server');
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to update word');
+        }
+        
+        // Update local dictionary
         Object.assign(word, updatedData);
+        
         closeEditModal();
-        renderDictionary();
+        
+        // Re-render with current filters
+        renderDictionary(dictionaryFilters.search, dictionaryFilters.type, dictionaryFilters.category);
+        
         showDictionaryMessage('Word updated successfully!', 'success');
         addLog(`Edited: ${word.german}`);
-    } else {
-        alert('Failed to update word on server');
+    } catch (error) {
+        console.error('Update error:', error);
+        alert(`Failed to update word: ${error.message}`);
+    } finally {
+        showLoading(false);
     }
 }
 
@@ -1215,34 +1284,63 @@ async function saveManualWord() {
 }
 
 async function deleteWord(id) {
-    if (confirm('Are you sure you want to delete this word?')) {
-        const word = dictionary.find(w => w.id === id);
+    if (!confirm('Are you sure you want to delete this word?')) {
+        return;
+    }
+    
+    const word = dictionary.find(w => w.id === id);
+    
+    try {
+        showLoading(true);
         
         const response = await apiRequest(`${API_URL}/api/dictionary/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
         
-        if (response && response.ok) {
-            dictionary = dictionary.filter(w => w.id !== id);
-            selectedDictionaryWords.delete(id);
-            renderDictionary();
-            updatePracticeButton();
-            addLog(`Deleted: ${word.german}`);
-        } else {
-            alert('Failed to delete word from server');
+        if (!response) {
+            throw new Error('No response from server');
         }
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete word');
+        }
+        
+        // Remove from local dictionary
+        dictionary = dictionary.filter(w => w.id !== id);
+        selectedDictionaryWords.delete(id);
+        
+        // Re-render with current filters
+        renderDictionary(dictionaryFilters.search, dictionaryFilters.type, dictionaryFilters.category);
+        updatePracticeButton();
+        
+        showDictionaryMessage(`Word "${word.german}" deleted successfully!`, 'success');
+        addLog(`Deleted: ${word.german}`);
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert(`Failed to delete word: ${error.message}`);
+    } finally {
+        showLoading(false);
     }
 }
 
+
 function filterDictionary() {
-    const searchTerm = document.getElementById('search-dictionary').value.toLowerCase();
-    const typeFilter = document.getElementById('filter-type').value;
-    const categoryFilter = document.getElementById('filter-category').value;
-    renderDictionary(searchTerm, typeFilter, categoryFilter);
+    dictionaryFilters.search = document.getElementById('search-dictionary').value.toLowerCase();
+    dictionaryFilters.type = document.getElementById('filter-type').value;
+    dictionaryFilters.category = document.getElementById('filter-category').value;
+    
+    renderDictionary(dictionaryFilters.search, dictionaryFilters.type, dictionaryFilters.category);
 }
 
 function renderDictionary(search = '', typeFilter = '', categoryFilter = '') {
     const listDiv = document.getElementById('dictionary-list');
+    
+    if (!listDiv) {
+        console.error('Dictionary list element not found!');
+        return;
+    }
     
     let filtered = dictionary.filter(w => {
         const matchesSearch = !search || 
@@ -1256,8 +1354,31 @@ function renderDictionary(search = '', typeFilter = '', categoryFilter = '') {
         return matchesSearch && matchesType && matchesCategory;
     });
     
+    if (dictionary.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; padding: 20px; color: #7f8c8d;">Your dictionary is empty. Double-click words in exercises to add them!</p>';
+        return;
+    }
+    
     if (filtered.length === 0) {
-        listDiv.innerHTML = '<p style="text-align: center; padding: 20px; color: #7f8c8d;">No words found.</p>';
+        const activeFilters = [];
+        if (search) activeFilters.push(`search: "${search}"`);
+        if (typeFilter) activeFilters.push(`type: ${typeFilter}`);
+        if (categoryFilter) activeFilters.push(`category: ${categoryFilter}`);
+        
+        listDiv.innerHTML = `
+            <div style="text-align: center; padding: 30px;">
+                <p style="color: #7f8c8d; margin-bottom: 12px;">
+                    <i class="fas fa-search" style="font-size: 32px; margin-bottom: 8px;"></i><br>
+                    No words found matching your filters.
+                </p>
+                <p style="color: #95a5a6; font-size: 14px;">
+                    Active filters: ${activeFilters.join(', ')}
+                </p>
+                <button class="btn-secondary" onclick="clearAllFilters()" style="margin-top: 16px;">
+                    <i class="fas fa-times"></i> Clear All Filters
+                </button>
+            </div>
+        `;
         return;
     }
     
@@ -1307,6 +1428,21 @@ function renderDictionary(search = '', typeFilter = '', categoryFilter = '') {
     `}).join('');
 }
 
+function clearAllFilters() {
+    dictionaryFilters = {
+        search: '',
+        type: '',
+        category: ''
+    };
+    
+    document.getElementById('search-dictionary').value = '';
+    document.getElementById('filter-type').value = '';
+    document.getElementById('filter-category').value = '';
+    
+    renderDictionary();
+}
+
+
 function toggleWordDetails(wordId) {
     const wordElement = document.querySelector(`[data-word-id="${wordId}"]`);
     if (!wordElement) return;
@@ -1329,12 +1465,17 @@ function toggleWordDetails(wordId) {
 
 function showDictionaryMessage(text, type) {
     const message = document.getElementById('dictionary-message');
+    if (!message) return;
+    
     message.textContent = text;
     message.className = `message ${type}`;
+    message.style.display = 'block';
+    
     setTimeout(() => {
         message.textContent = '';
         message.className = 'message';
-    }, 3000);
+        message.style.display = 'none';
+    }, 4000);
 }
 
 async function addLog(content) {
@@ -1812,6 +1953,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
