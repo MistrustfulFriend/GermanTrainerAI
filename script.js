@@ -109,32 +109,44 @@ function addChatMessage(role, content, streaming = false) {
     return textDiv;
 }
 
+
+
+
+
 function formatChatMessage(text) {
-    // First, normalize line breaks (convert \r\n to \n)
+    // Normalize line breaks
     text = text.replace(/\r\n/g, '\n');
     
-    // Format markdown-style elements
-    // Bold text: **text** -> <strong>text</strong>
+    // Format markdown-style bold: **text** -> <strong>text</strong>
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Inline code: `text` -> <code>text</code>
-    text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+    // Format inline code: `text` -> <code>text</code>
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // Convert double line breaks to paragraph breaks
-    text = text.replace(/\n\n+/g, '</p><p>');
+    // Convert multiple consecutive line breaks to double line break
+    text = text.replace(/\n{3,}/g, '\n\n');
     
-    // Convert single line breaks to <br> only within paragraphs
-    text = text.replace(/\n/g, '<br>');
+    // Split into paragraphs (double line break = new paragraph)
+    const paragraphs = text.split('\n\n');
     
-    // Wrap in paragraph tags
-    text = '<p>' + text + '</p>';
+    // Process each paragraph
+    const processedParagraphs = paragraphs.map(para => {
+        // Trim the paragraph
+        para = para.trim();
+        if (!para) return '';
+        
+        // Keep single line breaks within paragraphs
+        // but convert them to <br> tags
+        para = para.replace(/\n/g, '<br>');
+        
+        return `<p>${para}</p>`;
+    });
     
-    // Clean up any empty paragraphs
-    text = text.replace(/<p><\/p>/g, '');
-    text = text.replace(/<p>\s*<\/p>/g, '');
-    
-    return text;
+    // Join all paragraphs
+    return processedParagraphs.filter(p => p).join('');
 }
+
+
 
 async function getChatResponse(userMessage) {
     isGenerating = true;
@@ -149,7 +161,7 @@ async function getChatResponse(userMessage) {
             credentials: 'include',
             body: JSON.stringify({
                 message: userMessage,
-                history: chatHistory.slice(-10) // Send last 10 messages for context
+                history: chatHistory.slice(-10)
             })
         });
         
@@ -157,7 +169,6 @@ async function getChatResponse(userMessage) {
             throw new Error('Failed to get response');
         }
         
-        // Handle streaming response
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
@@ -185,6 +196,8 @@ async function getChatResponse(userMessage) {
                         
                         if (parsed.content) {
                             fullText += parsed.content;
+                            
+                            // Use formatChatMessage for consistent formatting
                             streamingText.innerHTML = formatChatMessage(fullText);
                             
                             // Auto-scroll
@@ -209,7 +222,7 @@ async function getChatResponse(userMessage) {
         
     } catch (error) {
         console.error('Chat error:', error);
-        streamingText.innerHTML = `<em>Sorry, I encountered an error: ${error.message}</em>`;
+        streamingText.innerHTML = `<p><em>Sorry, I encountered an error: ${error.message}</em></p>`;
     } finally {
         isGenerating = false;
     }
@@ -1953,6 +1966,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
