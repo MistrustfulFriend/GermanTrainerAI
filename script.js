@@ -624,6 +624,7 @@ function deselectAllTopics() {
     document.querySelectorAll('.topic-checkbox').forEach(cb => cb.checked = false);
 }
 
+
 function saveTopics() {
     customPracticeText = document.getElementById('custom-practice-input').value.trim();
     
@@ -640,15 +641,19 @@ function saveTopics() {
     
     if (customPracticeText.length > 0 || selectedTopics.length > 0) {
         let messageText = '';
+        let logDetails = {};
+        
         if (customPracticeText.length > 0) {
-            messageText = `Custom practice topic saved: "${customPracticeText.substring(0, 50)}${customPracticeText.length > 50 ? '...' : ''}"`;
-            addLog(`Custom practice: ${customPracticeText}`);
+            messageText = `Custom practice topic saved`;
+            logDetails.customTopic = customPracticeText;
         }
         if (selectedTopics.length > 0) {
             if (messageText) messageText += ' | ';
             messageText += `${selectedTopics.length} topic(s) selected`;
-            addLog(`Selected topics: ${selectedTopics.map(t => t.value).join(', ')}`);
+            logDetails.topics = selectedTopics.map(t => t.value);
         }
+        
+        addLog('Topics configured', logDetails);
         message.textContent = messageText;
         message.className = 'message success';
     } else {
@@ -661,6 +666,9 @@ function saveTopics() {
         message.className = 'message';
     }, 4000);
 }
+
+
+
 
 function checkTrainingAvailability() {
     const noTopicsMsg = document.getElementById('no-topics-message');
@@ -686,6 +694,7 @@ function updatePracticeButton() {
         btn.style.display = 'none';
     }
 }
+
 
 async function startExercise() {
     if (selectedTopics.length === 0 && !customPracticeText && dictionary.length === 0) {
@@ -725,7 +734,13 @@ async function startExercise() {
         
         currentExercise = await response.json();
         renderExercise(currentExercise);
-        addLog(`Started ${exerciseType} exercise`);
+        
+        // Enhanced logging with full exercise context
+        addLog(`Started ${exerciseType} exercise`, {
+            exerciseType: exerciseType,
+            topics: topicsToSend.map(t => t.value || t.text),
+            question: currentExercise.question.substring(0, 100) + '...'
+        });
     } catch (error) {
         console.error('Error:', error);
         alert(`Failed to load exercise: ${error.message}`);
@@ -733,6 +748,11 @@ async function startExercise() {
         showLoading(false);
     }
 }
+
+
+
+
+
 
 async function practiceSelectedWords() {
     if (selectedDictionaryWords.size === 0) {
@@ -900,6 +920,7 @@ function closeWordModal() {
     document.getElementById('word-selection-modal').classList.remove('active');
 }
 
+
 async function addSelectedWord() {
     const word = document.getElementById('selected-word-input').value.trim();
 
@@ -951,7 +972,17 @@ async function addSelectedWord() {
         if (addResponse && addResponse.ok) {
             const serverWord = await addResponse.json();
             dictionary.push(serverWord);
-            addLog(`Added: ${wordData.german}`);
+            
+            // Enhanced logging with full word details
+            addLog(`Added word to dictionary`, {
+                german: wordData.german,
+                english: wordData.english,
+                russian: wordData.russian,
+                type: wordData.type,
+                category: wordData.category,
+                explanation: wordData.explanation
+            });
+            
             alert(`Word "${wordData.german}" added to dictionary!`);
         }
 
@@ -963,6 +994,7 @@ async function addSelectedWord() {
     }
 }
 
+
 async function submitAnswer() {
     const answer = document.getElementById('exercise-answer').value.trim();
     
@@ -973,7 +1005,6 @@ async function submitAnswer() {
     
     showLoading(true);
     
-    // Clear previous feedback
     const feedbackDiv = document.getElementById('exercise-feedback');
     feedbackDiv.innerHTML = '';
     feedbackDiv.className = 'exercise-feedback';
@@ -998,10 +1029,8 @@ async function submitAnswer() {
             throw new Error(errorData.error || 'Failed to check answer');
         }
         
-        // Hide loading overlay to show streaming text
         showLoading(false);
         
-        // Handle streaming response
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
@@ -1013,13 +1042,12 @@ async function submitAnswer() {
                 break;
             }
             
-            // Decode the chunk
             const chunk = decoder.decode(value, { stream: true });
             const lines = chunk.split('\n');
             
             for (const line of lines) {
                 if (line.startsWith('data: ')) {
-                    const data = line.slice(6); // Remove 'data: ' prefix
+                    const data = line.slice(6);
                     
                     if (data === '[DONE]') {
                         continue;
@@ -1028,24 +1056,17 @@ async function submitAnswer() {
                     try {
                         const parsed = JSON.parse(data);
                         
-                        // Handle error in stream
                         if (parsed.error) {
                             throw new Error(parsed.error);
                         }
                         
-                        // Handle content
                         if (parsed.content) {
                             fullText += parsed.content;
-                            
-                            // Update feedback div with accumulated text
                             feedbackDiv.innerHTML = formatStreamingText(fullText);
-                            
-                            // Auto-scroll to bottom
                             feedbackDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
                     } catch (parseError) {
                         console.error('Parse error:', parseError);
-                        // If it's plain text (not JSON), just append it
                         if (data.trim()) {
                             fullText += data;
                             feedbackDiv.innerHTML = formatStreamingText(fullText);
@@ -1055,10 +1076,16 @@ async function submitAnswer() {
             }
         }
         
-        // Final update after streaming is complete
         if (fullText) {
             feedbackDiv.innerHTML = formatStreamingText(fullText);
-            addLog(`Completed exercise`);
+            
+            // Enhanced logging with full context
+            addLog('Completed exercise', {
+                exerciseType: document.getElementById('exercise-type').value,
+                question: currentExercise.question.substring(0, 150),
+                userAnswer: answer.substring(0, 150),
+                feedback: fullText.substring(0, 200)
+            });
         } else {
             throw new Error('No feedback received');
         }
@@ -1069,6 +1096,18 @@ async function submitAnswer() {
         displayFeedback({ error: `Failed to check answer: ${error.message}` });
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 function formatStreamingText(text) {
     // Format the streaming text for better readability
@@ -1296,6 +1335,8 @@ async function saveManualWord() {
     }
 }
 
+
+
 async function deleteWord(id) {
     if (!confirm('Are you sure you want to delete this word?')) {
         return;
@@ -1320,16 +1361,21 @@ async function deleteWord(id) {
             throw new Error(errorData.error || 'Failed to delete word');
         }
         
-        // Remove from local dictionary
         dictionary = dictionary.filter(w => w.id !== id);
         selectedDictionaryWords.delete(id);
         
-        // Re-render with current filters
         renderDictionary(dictionaryFilters.search, dictionaryFilters.type, dictionaryFilters.category);
         updatePracticeButton();
         
         showDictionaryMessage(`Word "${word.german}" deleted successfully!`, 'success');
-        addLog(`Deleted: ${word.german}`);
+        
+        // Enhanced logging with full word details
+        addLog(`Deleted word from dictionary`, {
+            german: word.german,
+            english: word.english,
+            russian: word.russian,
+            type: word.type
+        });
     } catch (error) {
         console.error('Delete error:', error);
         alert(`Failed to delete word: ${error.message}`);
@@ -1339,6 +1385,11 @@ async function deleteWord(id) {
 }
 
 
+
+
+
+
+
 function filterDictionary() {
     dictionaryFilters.search = document.getElementById('search-dictionary').value.toLowerCase();
     dictionaryFilters.type = document.getElementById('filter-type').value;
@@ -1346,6 +1397,7 @@ function filterDictionary() {
     
     renderDictionary(dictionaryFilters.search, dictionaryFilters.type, dictionaryFilters.category);
 }
+
 
 function renderDictionary(search = '', typeFilter = '', categoryFilter = '') {
     const listDiv = document.getElementById('dictionary-list');
@@ -1399,10 +1451,14 @@ function renderDictionary(search = '', typeFilter = '', categoryFilter = '') {
         const isSelected = selectedDictionaryWords.has(word.id);
         const selectedClass = isSelected ? 'selected-for-practice' : '';
         
+        // Check if word has details to show
+        const hasDetails = (word.explanation && word.explanation.trim()) || 
+                          (word.examples && word.examples.length > 0);
+        
         return `
-        <div class="dictionary-item ${selectedClass}">
-            <div class="word-header">
-                <div class="word-select-checkbox">
+        <div class="dictionary-item ${selectedClass}" data-word-id="${word.id}">
+            <div class="word-header" ${hasDetails ? `onclick="toggleWordDetails(${word.id})"` : ''}>
+                <div class="word-select-checkbox" onclick="event.stopPropagation();">
                     <input type="checkbox" 
                            ${isSelected ? 'checked' : ''} 
                            onchange="toggleWordSelection(${word.id})"
@@ -1419,22 +1475,31 @@ function renderDictionary(search = '', typeFilter = '', categoryFilter = '') {
                         <span class="word-badge badge-category">${word.category}</span>
                     </div>
                 </div>
-                <div class="word-actions">
+                <div class="word-actions" onclick="event.stopPropagation();">
+                    ${hasDetails ? `
+                        <button class="word-expand-btn" onclick="event.stopPropagation(); toggleWordDetails(${word.id})" title="Show details">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    ` : ''}
                     <button onclick="openEditModal(${word.id})" title="Edit">✏️</button>
                     <button onclick="deleteWord(${word.id})" title="Delete">🗑️</button>
                 </div>
             </div>
-            ${word.explanation ? `
-                <div class="word-details">
-                    <div class="word-explanation"><strong>Explanation:</strong> ${word.explanation}</div>
-                </div>
-            ` : ''}
-            ${word.examples && word.examples.length > 0 ? `
-                <div class="word-details">
-                    <div class="word-examples">
-                        <strong>Examples:</strong>
-                        ${word.examples.map(ex => `• ${ex}`).join('<br>')}
-                    </div>
+            ${hasDetails ? `
+                <div class="word-details-collapsible">
+                    ${word.explanation ? `
+                        <div class="word-details">
+                            <div class="word-explanation"><strong>Explanation:</strong> ${word.explanation}</div>
+                        </div>
+                    ` : ''}
+                    ${word.examples && word.examples.length > 0 ? `
+                        <div class="word-details">
+                            <div class="word-examples">
+                                <strong>Examples:</strong>
+                                ${word.examples.map(ex => `• ${ex}`).join('<br>')}
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
             ` : ''}
         </div>
@@ -1465,9 +1530,11 @@ function toggleWordDetails(wordId) {
     
     if (!detailsElement) return;
     
+    // Toggle expanded class
+    const isExpanding = !wordElement.classList.contains('expanded');
     wordElement.classList.toggle('expanded');
     
-    if (wordElement.classList.contains('expanded')) {
+    if (isExpanding) {
         detailsElement.style.maxHeight = detailsElement.scrollHeight + 'px';
         if (expandBtn) expandBtn.className = 'fas fa-chevron-up';
     } else {
@@ -1475,6 +1542,8 @@ function toggleWordDetails(wordId) {
         if (expandBtn) expandBtn.className = 'fas fa-chevron-down';
     }
 }
+
+
 
 function showDictionaryMessage(text, type) {
     const message = document.getElementById('dictionary-message');
@@ -1491,19 +1560,39 @@ function showDictionaryMessage(text, type) {
     }, 4000);
 }
 
-async function addLog(content) {
-    learningLog.unshift({
+async function addLog(content, details = null) {
+    let fullContent = content;
+    
+    // If details object is provided, format it nicely
+    if (details) {
+        if (typeof details === 'object') {
+            fullContent = `${content}\n${JSON.stringify(details, null, 2)}`;
+        } else {
+            fullContent = `${content}\nDetails: ${details}`;
+        }
+    }
+    
+    const logEntry = {
         id: Date.now(),
         timestamp: new Date().toISOString(),
-        content: content
-    });
+        content: fullContent
+    };
     
-    await apiRequest(`${API_URL}/api/log`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
-    });
+    learningLog.unshift(logEntry);
+    
+    // Send to server
+    try {
+        await apiRequest(`${API_URL}/api/log`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ content: fullContent })
+        });
+    } catch (error) {
+        console.error('Failed to save log to server:', error);
+    }
 }
+
 
 async function clearLog() {
     if (confirm('Clear entire log?')) {
@@ -1518,6 +1607,7 @@ async function clearLog() {
     }
 }
 
+
 function renderLog() {
     const listDiv = document.getElementById('log-list');
     
@@ -1526,13 +1616,36 @@ function renderLog() {
         return;
     }
     
-    listDiv.innerHTML = learningLog.map(entry => `
-        <div class="log-item">
-            <div class="log-timestamp">${new Date(entry.timestamp).toLocaleString()}</div>
-            <div class="log-content">${entry.content}</div>
-        </div>
-    `).join('');
+    listDiv.innerHTML = learningLog.map(entry => {
+        // Format the content - if it contains JSON, make it collapsible
+        let contentHtml = entry.content;
+        
+        // Check if content has structured data (contains newlines and looks like JSON)
+        if (entry.content.includes('\n') && entry.content.includes('{')) {
+            const parts = entry.content.split('\n');
+            const mainText = parts[0];
+            const details = parts.slice(1).join('\n');
+            
+            contentHtml = `
+                <div class="log-main-text">${mainText}</div>
+                <details class="log-details">
+                    <summary>Show details</summary>
+                    <pre class="log-details-content">${details}</pre>
+                </details>
+            `;
+        }
+        
+        return `
+            <div class="log-item">
+                <div class="log-timestamp">${new Date(entry.timestamp).toLocaleString()}</div>
+                <div class="log-content">${contentHtml}</div>
+            </div>
+        `;
+    }).join('');
 }
+
+
+
 
 function updateUI() {
     document.querySelectorAll('.topic-checkbox').forEach(checkbox => {
@@ -1966,6 +2079,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
