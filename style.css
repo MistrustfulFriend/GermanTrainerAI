@@ -92,36 +92,79 @@ header.collapsed .header-content {
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
-.logo {
-    height: 50px; /* Reduced from 70px for better proportion */
-    width: auto;
-    object-fit: contain;
-    /* Optional: Add slight drop shadow for better visibility */
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+.header-branding {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px; /* Space for user info */
 }
 
+.logo {
+    height: 55px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    flex-shrink: 0;
+}
+
+.header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1; /* Take remaining space */
+}
 
 h1 {
     color: #ffffff;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 600;
     letter-spacing: 0.3px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px; /* Add space before subtitle */
+    margin: 0;
+    line-height: 1.2;
 }
 
 h1 i {
-    font-size: 32px;
-    color: #9b9b9b;
+    display: none;
 }
 
 .subtitle {
     color: #a8a8a8;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 400;
     letter-spacing: 0.3px;
+    line-height: 1.3;
+}
+
+#user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+#user-info span {
+    color: #bdc3c7;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#user-info button {
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #bdc3c7;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+#user-info button:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.25);
+    color: #ffffff;
 }
 
 nav {
@@ -142,7 +185,7 @@ nav::-webkit-scrollbar {
 }
 
 .nav-btn {
-    padding: 16px 24px;
+    padding: 14px 20px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -851,23 +894,27 @@ input[type="file"] {
 
 @media screen and (max-width: 768px) {
     header {
-        margin-left: 0px;
-        margin-right: 0px;
+        margin-left: 0;
+        margin-right: 0;
         border-radius: 0 0 6px 6px;
     }
 
     .header-content {
         padding: 16px 20px;
+        max-height: 180px;
+    }
+
+    .header-branding {
+        gap: 12px;
+        margin-bottom: 10px;
     }
 
     .logo {
-        height: 35px; /* Smaller on mobile */
+        height: 40px;
     }
 
     h1 {
-        font-size: 18px;
-        gap: 8px;
-        margin-bottom: 6px;
+        font-size: 20px;
     }
 
     h1 i {
@@ -1144,26 +1191,35 @@ input[type="file"] {
     }
 
     #user-info {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 8px !important;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 6px 0;
+    }
+
+    #user-info span {
+        font-size: 12px;
     }
 
     #user-info button {
         width: 100%;
         justify-content: center;
+        padding: 8px 14px;
     }
 }
 
 /* Extra small phones */
 @media screen and (max-width: 375px) {
     h1 {
-        font-size: 16px;
-        gap: 6px;
+        font-size: 18px;
     }
 
+    .header-branding {
+        gap: 10px;
+    }
+    
     .logo {
-        height: 30px;
+        height: 35px;
     }
     
     .nav-btn {
@@ -1171,6 +1227,11 @@ input[type="file"] {
         font-size: 12px;
     }
 
+    .subtitle {
+        font-size: 11px;
+    }
+
+    
     .view {
         padding: 16px 12px;
     }
@@ -1192,6 +1253,24 @@ input[type="file"] {
 @media screen and (max-width: 768px) and (orientation: landscape) {
     .topics-scrollable {
         max-height: 300px;
+    }
+
+    .header-content {
+        padding: 12px 20px;
+        max-height: 150px;
+    }
+    
+    .header-branding {
+        margin-bottom: 8px;
+    }
+
+    .logo {
+        height: 35px;
+    }
+
+    #user-info {
+        flex-direction: row;
+        flex-wrap: wrap;
     }
 
     .modal-content {
@@ -1670,7 +1749,28 @@ input[type="file"] {
     header.collapsed nav {
         padding: 6px 12px;
     }
+
+    .nav-btn {
+        padding: 12px 14px;
+        font-size: 13px;
+        gap: 6px;
+    }
+
+    .nav-btn i {
+        font-size: 14px;
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 .chat-intro {
@@ -1906,6 +2006,7 @@ input[type="file"] {
         transform: scale(0.95);
     }
 }
+
 
 
 
