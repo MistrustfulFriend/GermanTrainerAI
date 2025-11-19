@@ -111,7 +111,6 @@ function addChatMessage(role, content, streaming = false) {
 
 
 
-
 function formatChatMessage(text) {
     // Normalize line breaks
     text = text.replace(/\r\n/g, '\n');
@@ -125,26 +124,36 @@ function formatChatMessage(text) {
     // Convert multiple consecutive line breaks (3+) to double line break
     text = text.replace(/\n{3,}/g, '\n\n');
     
-    // Split into paragraphs ONLY on double line breaks
-    const paragraphs = text.split('\n\n');
+    // Split into sections by double line breaks
+    const sections = text.split('\n\n');
     
-    // Process each paragraph
-    const processedParagraphs = paragraphs.map(para => {
-        para = para.trim();
-        if (!para) return '';
+    // Process each section
+    const processedSections = sections.map(section => {
+        section = section.trim();
+        if (!section) return '';
         
-        // Within a paragraph, convert single line breaks to spaces
-        // This prevents awkward line breaking in the middle of sentences
-        para = para.replace(/\n/g, ' ');
+        // Check if this section is a numbered or bulleted list
+        const lines = section.split('\n');
+        const isNumberedList = lines.every(line => 
+            line.trim() === '' || /^\d+\./.test(line.trim()) || line.startsWith('-')
+        );
         
-        // Clean up multiple spaces
-        para = para.replace(/\s+/g, ' ');
-        
-        return `<p>${para}</p>`;
+        if (isNumberedList && lines.length > 1) {
+            // This is a list - preserve line breaks as <br>
+            const formattedLines = lines
+                .filter(line => line.trim())
+                .map(line => line.trim())
+                .join('<br>');
+            return `<p>${formattedLines}</p>`;
+        } else {
+            // Regular paragraph - convert single line breaks to spaces
+            const cleaned = section.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+            return `<p>${cleaned}</p>`;
+        }
     });
     
-    // Join all paragraphs
-    return processedParagraphs.filter(p => p).join('');
+    // Join all sections
+    return processedSections.filter(p => p).join('');
 }
 
 
@@ -2079,6 +2088,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
