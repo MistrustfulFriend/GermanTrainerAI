@@ -116,13 +116,7 @@ function formatChatMessage(text) {
     // Normalize line breaks
     text = text.replace(/\r\n/g, '\n');
     
-    // Format markdown-style bold: **text** -> <strong>text</strong>
-    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Format inline code: `text` -> <code>text</code>
-    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-    
-    // Split by double line breaks to identify paragraphs
+    // Split by double line breaks to identify paragraphs FIRST
     const paragraphs = text.split(/\n\n+/);
     
     // Process each paragraph
@@ -133,14 +127,23 @@ function formatChatMessage(text) {
         para = para.replace(/\s+/g, ' ');
         // Trim
         para = para.trim();
-        // Wrap in paragraph tag if not empty
-        return para ? `<p>${para}</p>` : '';
+        
+        if (!para) return '';
+        
+        // NOW apply inline formatting AFTER paragraph structure is set
+        // Format markdown-style bold: **text** -> <strong>text</strong>
+        para = para.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Format inline code: `text` -> <code>text</code>
+        para = para.replace(/`([^`]+)`/g, '<code>$1</code>');
+        
+        // Wrap in paragraph tag
+        return `<p>${para}</p>`;
     }).filter(p => p); // Remove empty paragraphs
     
     // Join paragraphs
     return formattedParagraphs.join('');
 }
-
 
 
 async function getChatResponse(userMessage) {
@@ -2074,6 +2077,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
