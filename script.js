@@ -120,50 +120,42 @@ function formatChatMessage(text) {
     // Format inline code: `text` -> <code>code</code>
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // Convert multiple consecutive line breaks (3+) to double line break
-    text = text.replace(/\n{3,}/g, '\n\n');
+    // Split text into paragraphs by double line breaks (or more)
+    const paragraphs = text.split(/\n\n+/);
     
-    // Split into sections by double line breaks
-    const sections = text.split('\n\n');
-    
-    // Process each section
-    const processedSections = sections.map(section => {
-        section = section.trim();
-        if (!section) return '';
+    // Process each paragraph
+    const processedParagraphs = paragraphs.map(paragraph => {
+        paragraph = paragraph.trim();
+        if (!paragraph) return '';
         
-        // Check if this section contains list items
-        const lines = section.split('\n');
+        const lines = paragraph.split('\n');
         
-        // A section is a list if most lines start with numbers, bullets, or dashes
-        const listLines = lines.filter(line => {
+        // Check if this is a list (numbered or bulleted)
+        const hasListItems = lines.some(line => {
             const trimmed = line.trim();
-            return /^\d+\./.test(trimmed) || /^[-•]/.test(trimmed);
+            return /^\d+\.\s/.test(trimmed) || /^[-•*]\s/.test(trimmed);
         });
         
-        const isListSection = listLines.length > 0 && listLines.length >= lines.length * 0.5;
-        
-        if (isListSection) {
-            // This is a list section - preserve line breaks
+        if (hasListItems) {
+            // This is a list - preserve individual lines with <br>
             const formattedLines = lines
                 .map(line => line.trim())
                 .filter(line => line)
                 .join('<br>');
             return `<p>${formattedLines}</p>`;
         } else {
-            // Regular paragraph - join lines with spaces
-            const cleaned = section
-                .split('\n')
+            // Regular paragraph - join single line breaks into one continuous text
+            const cleaned = lines
                 .map(line => line.trim())
                 .filter(line => line)
-                .join(' ');
+                .join(' '); // Join with space, not line break
             return `<p>${cleaned}</p>`;
         }
     });
     
-    // Join all sections
-    return processedSections.filter(p => p).join('');
+    // Join all paragraphs
+    return processedParagraphs.filter(p => p).join('');
 }
-
 
 async function getChatResponse(userMessage) {
     isGenerating = true;
@@ -2096,6 +2088,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
