@@ -13,13 +13,22 @@
     <div class="container">
         <header>
             <div class="header-content">
-                <img src="/static/images/Germanica_Logo.png" class="logo">
-                <h1>Germanica AI</h1>
-                <div class="subtitle">Master German with AI-Powered Exercises</div>
+                <!-- Logo and Title -->
+                <div class="header-branding">
+                    <img src="/static/images/Germanica_Logo.png" class="logo" alt="Germanica Logo">
+                    <div class="header-text">
+                        <h1>Germanica AI</h1>
+                        <div class="subtitle">Master German with AI-Powered Exercises</div>
+                    </div>
+                </div>
+                
+                <!-- User Info - Will be added by JavaScript -->
+                <div id="user-info-container">
+                    <!-- JavaScript will insert user info here via updateUserInfo() -->
+                </div>
             </div>
-
-
-            
+        
+            <!-- Navigation -->
             <nav>
                 <button class="nav-btn active" data-view="topics">
                     <i class="fas fa-list-check"></i> Topics
@@ -33,7 +42,6 @@
                 <button class="nav-btn" data-view="dictionary">
                     <i class="fas fa-book"></i> Dictionary
                 </button>
-
                 <button class="nav-btn" data-view="chat">
                     <i class="fas fa-comments"></i> Teacher Chat
                 </button>
@@ -505,6 +513,7 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
