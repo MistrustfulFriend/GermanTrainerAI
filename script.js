@@ -444,20 +444,20 @@ function initializeApp() {
 }
 
 function updateUserInfo() {
-    const header = document.querySelector('.header-content');
-    if (currentUser && !document.getElementById('user-info')) {
+    const container = document.getElementById('user-info-container');
+    
+    if (currentUser && container && !document.getElementById('user-info')) {
         const userInfo = document.createElement('div');
         userInfo.id = 'user-info';
-        userInfo.style.cssText = 'display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);';
         userInfo.innerHTML = `
-            <span style="color: #bdc3c7; font-size: 14px;">
+            <span>
                 <i class="fas fa-user-circle"></i> ${currentUser.user.username}
             </span>
-            <button onclick="handleLogout()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #bdc3c7; border-radius: 4px; cursor: pointer; font-size: 12px;">
+            <button onclick="handleLogout()">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </button>
         `;
-        header.appendChild(userInfo);
+        container.appendChild(userInfo);
     }
 }
 
@@ -2079,6 +2079,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
