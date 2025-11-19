@@ -110,6 +110,7 @@ function addChatMessage(role, content, streaming = false) {
 }
 
 
+
 function formatChatMessage(text) {
     // Normalize line breaks
     text = text.replace(/\r\n/g, '\n');
@@ -120,42 +121,20 @@ function formatChatMessage(text) {
     // Format inline code: `text` -> <code>code</code>
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // Split text into paragraphs by double line breaks (or more)
-    const paragraphs = text.split(/\n\n+/);
+    // Replace all single line breaks with spaces (join everything into continuous text)
+    text = text.replace(/\n/g, ' ');
     
-    // Process each paragraph
-    const processedParagraphs = paragraphs.map(paragraph => {
-        paragraph = paragraph.trim();
-        if (!paragraph) return '';
-        
-        const lines = paragraph.split('\n');
-        
-        // Check if this is a list (numbered or bulleted)
-        const hasListItems = lines.some(line => {
-            const trimmed = line.trim();
-            return /^\d+\.\s/.test(trimmed) || /^[-•*]\s/.test(trimmed);
-        });
-        
-        if (hasListItems) {
-            // This is a list - preserve individual lines with <br>
-            const formattedLines = lines
-                .map(line => line.trim())
-                .filter(line => line)
-                .join('<br>');
-            return `<p>${formattedLines}</p>`;
-        } else {
-            // Regular paragraph - join single line breaks into one continuous text
-            const cleaned = lines
-                .map(line => line.trim())
-                .filter(line => line)
-                .join(' '); // Join with space, not line break
-            return `<p>${cleaned}</p>`;
-        }
-    });
+    // Replace multiple spaces with single space
+    text = text.replace(/\s+/g, ' ');
     
-    // Join all paragraphs
-    return processedParagraphs.filter(p => p).join('');
+    // Trim the result
+    text = text.trim();
+    
+    // Return as single paragraph
+    return text;
 }
+
+
 
 async function getChatResponse(userMessage) {
     isGenerating = true;
@@ -2088,6 +2067,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
