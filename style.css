@@ -370,7 +370,7 @@ h4 {
 margin-bottom: 16px;
 color: #2d2d2d;
 font-size: 13px;
-font-weight: 600;
+font-weight: bold;
 display: flex;
 align-items: center;
 gap: 10px;
@@ -2125,6 +2125,7 @@ background: linear-gradient(135deg, #eeeeee 0%, #f5f5f5 100%);
 transform: scale(0.95);
 }
 }
+
 
 
 
