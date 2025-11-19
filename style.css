@@ -56,9 +56,11 @@ body::after {
 }
 
 header {
-    background: linear-gradient(135deg, #191919 0%, #2d2d2d 100%);
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
     padding: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 
+        0 2px 8px rgba(0,0,0,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.05);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -67,6 +69,43 @@ header {
     margin-left: 24px;
     margin-right: 24px;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    position: relative;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.03),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+header:hover::before {
+    left: 100%;
+}
+
+header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 32px;
+    right: 32px;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1) 20%,
+        rgba(255, 255, 255, 0.1) 80%,
+        transparent
+    );
 }
 
 /* Header collapsed state */
@@ -85,12 +124,18 @@ header.collapsed .header-content {
 
 .header-content {
     padding: 24px 32px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
     max-height: 200px;
     opacity: 1;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.02) 0%,
+        transparent 100%
+    );
 }
+
 
 .header-branding {
     display: flex;
@@ -103,8 +148,13 @@ header.collapsed .header-content {
     height: 40px;
     width: auto;
     object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) brightness(1.05);
     flex-shrink: 0;
+    transition: filter 0.3s ease;
+}
+
+.logo:hover {
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4)) brightness(1.1);
 }
 
 .header-text {
@@ -118,9 +168,10 @@ h1 {
     color: #ffffff;
     font-size: 26px;
     font-weight: 600;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
     margin: 0;
     line-height: 1.2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 h1 i {
@@ -128,11 +179,12 @@ h1 i {
 }
 
 .subtitle {
-    color: #a8a8a8;
+    color: #b8b8b8;
     font-size: 13px;
     font-weight: 400;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
     line-height: 1.3;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 #user-info {
@@ -152,19 +204,23 @@ h1 i {
 
 #user-info button {
     padding: 6px 14px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #bdc3c7;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #c8c8c8;
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
     transition: all 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 #user-info button:hover {
-    background: rgba(255,255,255,0.12);
-    border-color: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
     color: #ffffff;
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 2px 4px rgba(0,0,0,0.2);
 }
 
 nav {
@@ -174,6 +230,11 @@ nav {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     transition: padding 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.1) 0%,
+        transparent 100%
+    );
 }
 
 header.collapsed nav {
@@ -191,7 +252,7 @@ nav::-webkit-scrollbar {
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    color: #a8a8a8;
+    color: #b8b8b8;
     transition: all 0.3s ease;
     position: relative;
     display: flex;
@@ -201,14 +262,40 @@ nav::-webkit-scrollbar {
     flex-shrink: 0;
 }
 
+.nav-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.05),
+        transparent
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nav-btn:hover::before {
+    opacity: 1;
+}
+
+
+
 .nav-btn:hover {
-    background: rgba(255,255,255,0.04);
     color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .nav-btn.active {
-    background: #191919;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.03) 100%
+    );
     color: #ffffff;
+    box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.2),
+        0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .nav-btn.active::after {
@@ -217,8 +304,15 @@ nav::-webkit-scrollbar {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: #505050;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #808080 20%,
+        #808080 80%,
+        transparent
+    );
+    box-shadow: 0 0 8px rgba(128, 128, 128, 0.3);
 }
 
 .view {
@@ -2006,6 +2100,7 @@ input[type="file"] {
         transform: scale(0.95);
     }
 }
+
 
 
 
