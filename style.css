@@ -2031,11 +2031,13 @@ input[type="file"] {
     border-radius: 3px;
     font-family: 'Courier New', monospace;
     font-size: 13px;
-    white-space: nowrap;
+    display: inline;
+    white-space: normal;
 }
 
 .chat-message.user .message-content code {
     background: rgba(255, 255, 255, 0.15);
+    display: inline;
 }
 
 /* Mobile responsive */
@@ -2100,6 +2102,7 @@ input[type="file"] {
         transform: scale(0.95);
     }
 }
+
 
 
 
