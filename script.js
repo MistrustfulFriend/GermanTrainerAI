@@ -112,7 +112,6 @@ function addChatMessage(role, content, streaming = false) {
 
 
 
-
 function formatChatMessage(text) {
     // Normalize line breaks
     text = text.replace(/\r\n/g, '\n');
@@ -120,24 +119,26 @@ function formatChatMessage(text) {
     // Format markdown-style bold: **text** -> <strong>text</strong>
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Format inline code: `text` -> <code>text</code>
+    // Format inline code: `text` -> <code>code</code>
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // Convert multiple consecutive line breaks to double line break
+    // Convert multiple consecutive line breaks (3+) to double line break
     text = text.replace(/\n{3,}/g, '\n\n');
     
-    // Split into paragraphs (double line break = new paragraph)
+    // Split into paragraphs ONLY on double line breaks
     const paragraphs = text.split('\n\n');
     
     // Process each paragraph
     const processedParagraphs = paragraphs.map(para => {
-        // Trim the paragraph
         para = para.trim();
         if (!para) return '';
         
-        // Keep single line breaks within paragraphs
-        // but convert them to <br> tags
-        para = para.replace(/\n/g, '<br>');
+        // Within a paragraph, convert single line breaks to spaces
+        // This prevents awkward line breaking in the middle of sentences
+        para = para.replace(/\n/g, ' ');
+        
+        // Clean up multiple spaces
+        para = para.replace(/\s+/g, ' ');
         
         return `<p>${para}</p>`;
     });
@@ -145,7 +146,6 @@ function formatChatMessage(text) {
     // Join all paragraphs
     return processedParagraphs.filter(p => p).join('');
 }
-
 
 
 async function getChatResponse(userMessage) {
@@ -2079,6 +2079,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
