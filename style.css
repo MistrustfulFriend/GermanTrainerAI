@@ -1956,7 +1956,6 @@ border: none;
 }
 
 .message-content strong {
-display: block;
 margin-bottom: 6px;
 font-size: 13px;
 font-weight: 600;
@@ -2116,6 +2115,7 @@ background: linear-gradient(135deg, #eeeeee 0%, #f5f5f5 100%);
 transform: scale(0.95);
 }
 }
+
 
 
 
