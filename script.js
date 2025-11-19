@@ -71,6 +71,7 @@ function sendChatMessage() {
     getChatResponse(message);
 }
 
+
 function addChatMessage(role, content, streaming = false) {
     const messagesDiv = document.getElementById('chat-messages');
     
@@ -87,7 +88,7 @@ function addChatMessage(role, content, streaming = false) {
     const nameDiv = document.createElement('strong');
     nameDiv.textContent = role === 'user' ? 'You' : 'German Teacher';
     
-    const textDiv = document.createElement('p');
+    const textDiv = document.createElement('div');
     if (streaming) {
         textDiv.innerHTML = '<span class="message-streaming"></span>';
         textDiv.id = 'streaming-message';
@@ -2067,6 +2068,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
