@@ -110,7 +110,6 @@ function addChatMessage(role, content, streaming = false) {
 }
 
 
-
 function formatChatMessage(text) {
     // Normalize line breaks
     text = text.replace(/\r\n/g, '\n');
@@ -132,22 +131,31 @@ function formatChatMessage(text) {
         section = section.trim();
         if (!section) return '';
         
-        // Check if this section is a numbered or bulleted list
+        // Check if this section contains list items
         const lines = section.split('\n');
-        const isNumberedList = lines.every(line => 
-            line.trim() === '' || /^\d+\./.test(line.trim()) || line.startsWith('-')
-        );
         
-        if (isNumberedList && lines.length > 1) {
-            // This is a list - preserve line breaks as <br>
+        // A section is a list if most lines start with numbers, bullets, or dashes
+        const listLines = lines.filter(line => {
+            const trimmed = line.trim();
+            return /^\d+\./.test(trimmed) || /^[-•]/.test(trimmed);
+        });
+        
+        const isListSection = listLines.length > 0 && listLines.length >= lines.length * 0.5;
+        
+        if (isListSection) {
+            // This is a list section - preserve line breaks
             const formattedLines = lines
-                .filter(line => line.trim())
                 .map(line => line.trim())
+                .filter(line => line)
                 .join('<br>');
             return `<p>${formattedLines}</p>`;
         } else {
-            // Regular paragraph - convert single line breaks to spaces
-            const cleaned = section.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+            // Regular paragraph - join lines with spaces
+            const cleaned = section
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line)
+                .join(' ');
             return `<p>${cleaned}</p>`;
         }
     });
@@ -2088,6 +2096,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
