@@ -111,40 +111,73 @@ function addChatMessage(role, content, streaming = false) {
 }
 
 
-
 function formatChatMessage(text) {
     // Normalize line breaks
     text = text.replace(/\r\n/g, '\n');
     
-    // Split by double line breaks to identify paragraphs FIRST
-    const paragraphs = text.split(/\n\n+/);
+    // Split by double line breaks to identify sections
+    const sections = text.split(/\n\n+/);
     
-    // Process each paragraph
-    const formattedParagraphs = paragraphs.map(para => {
-        // Replace single line breaks within paragraphs with spaces
-        para = para.replace(/\n/g, ' ');
-        // Replace multiple spaces with single space
-        para = para.replace(/\s+/g, ' ');
-        // Trim
-        para = para.trim();
+    // Process each section
+    const formattedSections = sections.map(section => {
+        section = section.trim();
+        if (!section) return '';
         
-        if (!para) return '';
+        // Check if this is a header (starts with ###)
+        if (section.startsWith('###')) {
+            const headerText = section.replace(/^###\s*/, '');
+            const formatted = headerText
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>');
+            return `<h4>${formatted}</h4>`;
+        }
         
-        // NOW apply inline formatting AFTER paragraph structure is set
-        // Format markdown-style bold: **text** -> <strong>text</strong>
-        para = para.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Check if this is a list (contains lines starting with -)
+        if (section.includes('\n-')) {
+            const lines = section.split('\n');
+            let listHtml = '<ul>';
+            let inList = false;
+            let currentText = '';
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('-')) {
+                    if (currentText && !inList) {
+                        // There's text before the list
+                        const formatted = currentText
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/`([^`]+)`/g, '<code>$1</code>');
+                        listHtml = `<p>${formatted}</p>` + listHtml;
+                        currentText = '';
+                    }
+                    inList = true;
+                    const itemText = line.substring(1).trim()
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/`([^`]+)`/g, '<code>$1</code>');
+                    listHtml += `<li>${itemText}</li>`;
+                } else if (line) {
+                    if (inList) {
+                        // Text after a list item on a new line - append to previous item
+                        listHtml = listHtml.replace(/<\/li>$/, ` ${line}</li>`);
+                    } else {
+                        currentText += (currentText ? ' ' : '') + line;
+                    }
+                }
+            }
+            listHtml += '</ul>';
+            return listHtml;
+        }
         
-        // Format inline code: `text` -> <code>text</code>
-        para = para.replace(/`([^`]+)`/g, '<code>$1</code>');
-        
-        // Wrap in paragraph tag
-        return `<p>${para}</p>`;
-    }).filter(p => p); // Remove empty paragraphs
+        // Regular paragraph - collapse all line breaks within it
+        const collapsed = section.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        const formatted = collapsed
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>');
+        return `<p>${formatted}</p>`;
+    }).filter(s => s);
     
-    // Join paragraphs
-    return formattedParagraphs.join('');
+    return formattedSections.join('');
 }
-
 
 async function getChatResponse(userMessage) {
     isGenerating = true;
@@ -2077,6 +2110,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
