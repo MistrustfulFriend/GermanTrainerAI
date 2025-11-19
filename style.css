@@ -366,6 +366,16 @@ align-items: center;
 gap: 10px;
 }
 
+h4 {
+margin-bottom: 16px;
+color: #2d2d2d;
+font-size: 13px;
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
 .btn-primary, .btn-secondary, .btn-accent {
 padding: 10px 20px;
 border: none;
@@ -2115,6 +2125,7 @@ background: linear-gradient(135deg, #eeeeee 0%, #f5f5f5 100%);
 transform: scale(0.95);
 }
 }
+
 
 
 
