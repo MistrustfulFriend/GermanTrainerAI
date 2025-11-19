@@ -96,11 +96,11 @@ header.collapsed .header-content {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 12px; /* Space for user info */
+    margin-bottom: 0px; /* Space for user info */
 }
 
 .logo {
-    height: 55px;
+    height: 40px;
     width: auto;
     object-fit: contain;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
@@ -906,7 +906,7 @@ input[type="file"] {
 
     .header-branding {
         gap: 12px;
-        margin-bottom: 10px;
+        margin-bottom: 0px;
     }
 
     .logo {
@@ -1261,7 +1261,7 @@ input[type="file"] {
     }
     
     .header-branding {
-        margin-bottom: 8px;
+        margin-bottom: 0px;
     }
 
     .logo {
@@ -2006,6 +2006,7 @@ input[type="file"] {
         transform: scale(0.95);
     }
 }
+
 
 
 
