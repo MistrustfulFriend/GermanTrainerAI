@@ -119,20 +119,26 @@ function formatChatMessage(text) {
     // Format markdown-style bold: **text** -> <strong>text</strong>
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Format inline code: `text` -> <code>code</code>
+    // Format inline code: `text` -> <code>text</code>
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // Replace all single line breaks with spaces (join everything into continuous text)
-    text = text.replace(/\n/g, ' ');
+    // Split by double line breaks to identify paragraphs
+    const paragraphs = text.split(/\n\n+/);
     
-    // Replace multiple spaces with single space
-    text = text.replace(/\s+/g, ' ');
+    // Process each paragraph
+    const formattedParagraphs = paragraphs.map(para => {
+        // Replace single line breaks within paragraphs with spaces
+        para = para.replace(/\n/g, ' ');
+        // Replace multiple spaces with single space
+        para = para.replace(/\s+/g, ' ');
+        // Trim
+        para = para.trim();
+        // Wrap in paragraph tag if not empty
+        return para ? `<p>${para}</p>` : '';
+    }).filter(p => p); // Remove empty paragraphs
     
-    // Trim the result
-    text = text.trim();
-    
-    // Return as single paragraph
-    return text;
+    // Join paragraphs
+    return formattedParagraphs.join('');
 }
 
 
@@ -2068,6 +2074,7 @@ function exitPractice() {
     practiceIndex = 0;
     quizScore = { correct: 0, total: 0 };
 }
+
 
 
 
